@@ -10,13 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivitiesRouteImport } from './routes/activities'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FoodRouteImport } from './routes/food'
 import { Route as PreviewRouteImport } from './routes/preview'
+import { Route as ShoppingListRouteImport } from './routes/shopping-list'
+import { Route as TodoRouteImport } from './routes/todo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivitiesRoute = ActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuilderRoute = BuilderRouteImport.update({
@@ -29,44 +39,112 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoodRoute = FoodRouteImport.update({
+  id: '/food',
+  path: '/food',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PreviewRoute = PreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShoppingListRoute = ShoppingListRouteImport.update({
+  id: '/shopping-list',
+  path: '/shopping-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodoRoute = TodoRouteImport.update({
+  id: '/todo',
+  path: '/todo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/food': typeof FoodRoute
   '/preview': typeof PreviewRoute
+  '/shopping-list': typeof ShoppingListRoute
+  '/todo': typeof TodoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/food': typeof FoodRoute
   '/preview': typeof PreviewRoute
+  '/shopping-list': typeof ShoppingListRoute
+  '/todo': typeof TodoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activities': typeof ActivitiesRoute
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
+  '/dashboard': typeof DashboardRoute
+  '/food': typeof FoodRoute
   '/preview': typeof PreviewRoute
+  '/shopping-list': typeof ShoppingListRoute
+  '/todo': typeof TodoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder' | '/checkout' | '/preview'
+  fullPaths:
+    | '/'
+    | '/activities'
+    | '/builder'
+    | '/checkout'
+    | '/dashboard'
+    | '/food'
+    | '/preview'
+    | '/shopping-list'
+    | '/todo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder' | '/checkout' | '/preview'
-  id: '__root__' | '/' | '/builder' | '/checkout' | '/preview'
+  to:
+    | '/'
+    | '/activities'
+    | '/builder'
+    | '/checkout'
+    | '/dashboard'
+    | '/food'
+    | '/preview'
+    | '/shopping-list'
+    | '/todo'
+  id:
+    | '__root__'
+    | '/'
+    | '/activities'
+    | '/builder'
+    | '/checkout'
+    | '/dashboard'
+    | '/food'
+    | '/preview'
+    | '/shopping-list'
+    | '/todo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivitiesRoute: typeof ActivitiesRoute
   BuilderRoute: typeof BuilderRoute
   CheckoutRoute: typeof CheckoutRoute
+  DashboardRoute: typeof DashboardRoute
+  FoodRoute: typeof FoodRoute
   PreviewRoute: typeof PreviewRoute
+  ShoppingListRoute: typeof ShoppingListRoute
+  TodoRoute: typeof TodoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activities': {
+      id: '/activities'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof ActivitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/builder': {
@@ -92,6 +177,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/food': {
+      id: '/food'
+      path: '/food'
+      fullPath: '/food'
+      preLoaderRoute: typeof FoodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/preview': {
       id: '/preview'
       path: '/preview'
@@ -99,14 +198,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shopping-list': {
+      id: '/shopping-list'
+      path: '/shopping-list'
+      fullPath: '/shopping-list'
+      preLoaderRoute: typeof ShoppingListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/todo': {
+      id: '/todo'
+      path: '/todo'
+      fullPath: '/todo'
+      preLoaderRoute: typeof TodoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivitiesRoute: ActivitiesRoute,
   BuilderRoute: BuilderRoute,
   CheckoutRoute: CheckoutRoute,
+  DashboardRoute: DashboardRoute,
+  FoodRoute: FoodRoute,
   PreviewRoute: PreviewRoute,
+  ShoppingListRoute: ShoppingListRoute,
+  TodoRoute: TodoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
