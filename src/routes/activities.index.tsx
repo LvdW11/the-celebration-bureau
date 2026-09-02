@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { activities } from "@/lib/party";
 
-export const Route = createFileRoute("/activities")({
+export const Route = createFileRoute("/activities/")({
   head: () => ({
     meta: [
       { title: "Activities — The Celebration Bureau" },
