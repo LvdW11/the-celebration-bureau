@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { party, timeline, todos } from "@/lib/party";
+import { ProgressBar } from "@/components/PartyBits";
+import { usePlan, useParty } from "@/lib/party-store";
+import { money } from "@/lib/plan";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Party Dashboard — The Celebration Bureau" },
-      { name: "description", content: "Emma's princess party at a glance: timeline, progress and budget." },
+      { name: "description", content: "Your princess party at a glance: timeline, progress and budget." },
       { property: "og:title", content: "Party Dashboard — The Celebration Bureau" },
       { property: "og:description", content: "Your whole party, in one calm view." },
     ],
@@ -14,55 +16,71 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
-const links = [
-  { to: "/todo", label: "To do", detail: "5 open tasks" },
-  { to: "/shopping-list", label: "Shopping list", detail: "18 items · $265" },
-  { to: "/activities", label: "Activities", detail: "4 planned" },
-  { to: "/food", label: "Food", detail: "Tea table menu" },
-] as const;
-
 function Dashboard() {
-  const done = todos.filter((t) => t.done).length;
+  const { details, timeline, activities, budget } = usePlan();
+  const { progress } = useParty();
+
+  const links = [
+    { to: "/todo", label: "To do", detail: `${progress.total - progress.done} open tasks` },
+    {
+      to: "/shopping-list",
+      label: "Shopping list",
+      detail: `${budget.items.length} items · ${money(budget.total)}`,
+    },
+    { to: "/activities", label: "Activities", detail: `${activities.length} planned for age ${details.age}` },
+    { to: "/food", label: "Food", detail: "Tea table menu & recipes" },
+  ] as const;
 
   return (
     <AppShell
       eyebrow="Your party"
-      title={`${party.childName} is turning ${party.age}`}
-      intro={`${party.theme} · ${party.guests} children · ${party.venue.toLowerCase()} · $${party.budget} budget`}
+      title={`${details.childName} is turning ${details.age}`}
+      intro={`${details.theme} · ${details.guests} children · ${details.venue.toLowerCase()} · $${details.budget} budget`}
+      action={
+        <Link to="/builder" className="text-sm text-gold underline-offset-4 hover:underline">
+          Edit party details
+        </Link>
+      }
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="surface p-6">
           <p className="eyebrow">When</p>
-          <p className="mt-2 text-[0.95rem]">{party.date}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{party.duration}</p>
+          <p className="mt-2 text-[0.95rem]">{details.date}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {timeline[0]?.time} · {details.durationHours} hours
+          </p>
         </div>
         <div className="surface p-6">
-          <p className="eyebrow">Progress</p>
-          <p className="mt-2 font-display text-3xl">
-            {done}
-            <span className="text-muted-foreground">/{todos.length}</span>
-          </p>
-          <div className="mt-3 h-1.5 w-full rounded-full bg-secondary">
-            <div className="h-full rounded-full bg-sage" style={{ width: `${(done / todos.length) * 100}%` }} />
-          </div>
+          <ProgressBar />
+          <p className="mt-3 text-sm text-muted-foreground">Updates as you tick tasks off.</p>
         </div>
         <div className="surface p-6">
           <p className="eyebrow">Budget</p>
-          <p className="mt-2 font-display text-3xl">$265</p>
-          <p className="mt-1 text-sm text-muted-foreground">Planned of ${party.budget} + cake</p>
+          <p className="mt-2 font-display text-3xl">{money(budget.total)}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {money(budget.remaining)} left of ${details.budget}
+          </p>
         </div>
       </div>
 
       <section className="mt-12">
         <h2 className="text-2xl">The afternoon</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Tap a moment for instructions, prep and what to buy.</p>
         <ol className="mt-5">
           {timeline.map((t) => (
-            <li key={t.time} className="flex gap-5 border-b border-border/70 py-5">
-              <span className="w-14 shrink-0 font-display text-lg text-gold">{t.time}</span>
-              <div>
-                <p className="text-[0.95rem]">{t.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{t.detail}</p>
-              </div>
+            <li key={t.id}>
+              <Link
+                to="/timeline/$momentId"
+                params={{ momentId: t.id }}
+                className="flex gap-5 border-b border-border/70 py-5 transition-colors hover:bg-secondary/40"
+              >
+                <span className="w-20 shrink-0 font-display text-lg text-gold">{t.time}</span>
+                <span className="flex-1">
+                  <span className="block text-[0.95rem]">{t.title}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{t.detail}</span>
+                </span>
+                <span className="self-center text-gold">→</span>
+              </Link>
             </li>
           ))}
         </ol>
@@ -70,7 +88,11 @@ function Dashboard() {
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
         {links.map((l) => (
-          <Link key={l.to} to={l.to} className="surface flex items-center justify-between p-6 transition-shadow hover:shadow-[var(--shadow-lift)]">
+          <Link
+            key={l.to}
+            to={l.to}
+            className="surface flex items-center justify-between p-6 transition-shadow hover:shadow-[var(--shadow-lift)]"
+          >
             <span>
               <span className="block text-[0.95rem]">{l.label}</span>
               <span className="mt-1 block text-sm text-muted-foreground">{l.detail}</span>
