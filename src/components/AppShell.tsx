@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { BackToParty } from "@/components/PartyBits";
 import { CalendarHeart, CheckCircle2, ShoppingBag, Sparkles, UtensilsCrossed } from "lucide-react";
 
 const nav = [
@@ -14,11 +15,13 @@ export function AppShell({
   eyebrow,
   title,
   intro,
+  action,
   children,
 }: {
   eyebrow: string;
   title: string;
   intro?: string;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -44,11 +47,13 @@ export function AppShell({
       </header>
 
       <main className="mx-auto max-w-5xl px-5 py-10 md:px-8 md:py-14">
+        <BackToParty className="mb-6" />
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-3 text-4xl md:text-5xl">{title}</h1>
         {intro ? (
           <p className="mt-4 max-w-xl text-[0.95rem] leading-relaxed text-muted-foreground">{intro}</p>
         ) : null}
+        {action ? <div className="mt-6">{action}</div> : null}
         <div className="mt-10">{children}</div>
       </main>
 

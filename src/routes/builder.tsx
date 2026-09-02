@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { party } from "@/lib/party";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useParty } from "@/lib/party-store";
 
 export const Route = createFileRoute("/builder")({
   head: () => ({
@@ -8,7 +7,7 @@ export const Route = createFileRoute("/builder")({
       { title: "Party Builder — The Celebration Bureau" },
       { name: "description", content: "Tell us about the child, the guests, the space and the budget." },
       { property: "og:title", content: "Party Builder — The Celebration Bureau" },
-      { property: "og:description", content: "Five quiet questions and your party plan is ready." },
+      { property: "og:description", content: "A few quiet questions and your party plan is ready." },
     ],
   }),
   component: Builder,
@@ -17,6 +16,7 @@ export const Route = createFileRoute("/builder")({
 const venues = ["Home", "Backyard", "Park"];
 const themes = ["Elegant Magical Princess"];
 const diyLevels = ["Low", "Medium", "High"];
+const startTimes = ["11:00", "12:00", "13:00", "14:00", "15:00"];
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -60,13 +60,8 @@ function Chips({
 }
 
 function Builder() {
-  const [name, setName] = useState(party.childName);
-  const [age, setAge] = useState(String(party.age));
-  const [guests, setGuests] = useState(party.guests);
-  const [venue, setVenue] = useState(party.venue);
-  const [theme, setTheme] = useState(party.theme);
-  const [budget, setBudget] = useState(party.budget);
-  const [diy, setDiy] = useState(party.diy);
+  const { details, setDetails } = useParty();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,72 +76,112 @@ function Builder() {
         <p className="eyebrow">Party builder</p>
         <h1 className="mt-3 text-4xl md:text-5xl">Tell us about the birthday</h1>
         <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground">
-          Seven quick answers. Everything else — timeline, shopping, food — we handle.
+          Every answer reshapes the plan — quantities, shopping list, activities and timeline all
+          follow from what you set here.
         </p>
 
         <form className="mt-10 space-y-8" onSubmit={(e) => e.preventDefault()}>
           <div className="surface space-y-7 p-6 md:p-8">
             <div className="grid gap-6 sm:grid-cols-2">
               <Field label="Child's name">
-                <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
-              </Field>
-              <Field label="Age turning">
                 <input
                   className={inputClass}
-                  inputMode="numeric"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
+                  value={details.childName}
+                  onChange={(e) => setDetails({ childName: e.target.value })}
+                />
+              </Field>
+              <Field label={`Age turning — ${details.age}`}>
+                <input
+                  type="range"
+                  min={4}
+                  max={8}
+                  value={details.age}
+                  onChange={(e) => setDetails({ age: Number(e.target.value) })}
+                  className="w-full accent-[var(--primary)]"
                 />
               </Field>
             </div>
 
-            <Field label={`Children attending — ${guests}`}>
+            <Field label={`Children attending — ${details.guests}`}>
               <input
                 type="range"
                 min={8}
                 max={15}
-                value={guests}
-                onChange={(e) => setGuests(Number(e.target.value))}
+                value={details.guests}
+                onChange={(e) => setDetails({ guests: Number(e.target.value) })}
                 className="w-full accent-[var(--primary)]"
               />
             </Field>
 
             <Field label="Where">
-              <Chips options={venues} value={venue} onChange={setVenue} />
+              <Chips options={venues} value={details.venue} onChange={(v) => setDetails({ venue: v })} />
+            </Field>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label="Date">
+                <input
+                  className={inputClass}
+                  value={details.date}
+                  onChange={(e) => setDetails({ date: e.target.value })}
+                />
+              </Field>
+              <Field label="Start time">
+                <Chips
+                  options={startTimes}
+                  value={details.startTime}
+                  onChange={(v) => setDetails({ startTime: v })}
+                />
+              </Field>
+            </div>
+
+            <Field label={`Length — ${details.durationHours} hours`}>
+              <input
+                type="range"
+                min={2}
+                max={4}
+                step={0.5}
+                value={details.durationHours}
+                onChange={(e) => setDetails({ durationHours: Number(e.target.value) })}
+                className="w-full accent-[var(--primary)]"
+              />
             </Field>
           </div>
 
           <div className="surface space-y-7 p-6 md:p-8">
             <Field label="Theme">
-              <Chips options={themes} value={theme} onChange={setTheme} />
+              <Chips options={themes} value={details.theme} onChange={(v) => setDetails({ theme: v })} />
               <p className="mt-3 text-xs text-muted-foreground">
                 More themes arrive after our first season.
               </p>
             </Field>
 
-            <Field label={`Budget — $${budget}`}>
+            <Field label={`Budget — $${details.budget}`}>
               <input
                 type="range"
                 min={150}
                 max={300}
                 step={10}
-                value={budget}
-                onChange={(e) => setBudget(Number(e.target.value))}
+                value={details.budget}
+                onChange={(e) => setDetails({ budget: Number(e.target.value) })}
                 className="w-full accent-[var(--primary)]"
               />
+              <p className="mt-3 text-xs text-muted-foreground">
+                A hard limit — we never recommend a list that goes over it.
+              </p>
             </Field>
 
             <Field label="How much do you want to make yourself?">
-              <Chips options={diyLevels} value={diy} onChange={setDiy} />
+              <Chips options={diyLevels} value={details.diy} onChange={(v) => setDetails({ diy: v })} />
             </Field>
           </div>
 
-          <Link
-            to="/preview"
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/preview" })}
             className="inline-flex w-full items-center justify-center rounded-full bg-primary px-7 py-4 text-sm tracking-wide text-primary-foreground transition-opacity hover:opacity-90 sm:w-auto"
           >
             Create my free preview
-          </Link>
+          </button>
         </form>
       </main>
     </div>
