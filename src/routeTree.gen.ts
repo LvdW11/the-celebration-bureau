@@ -18,6 +18,8 @@ import { Route as FoodRouteImport } from './routes/food'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as ShoppingListRouteImport } from './routes/shopping-list'
 import { Route as TodoRouteImport } from './routes/todo'
+import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
+import { Route as TimelineMomentIdRouteImport } from './routes/timeline.$momentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,10 +66,20 @@ const TodoRoute = TodoRouteImport.update({
   path: '/todo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
+  id: '/$activityId',
+  path: '/$activityId',
+  getParentRoute: () => ActivitiesRoute,
+} as any)
+const TimelineMomentIdRoute = TimelineMomentIdRouteImport.update({
+  id: '/timeline/$momentId',
+  path: '/timeline/$momentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/activities': typeof ActivitiesRoute
+  '/activities': typeof ActivitiesRouteWithChildren
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
@@ -75,10 +87,12 @@ export interface FileRoutesByFullPath {
   '/preview': typeof PreviewRoute
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/timeline/$momentId': typeof TimelineMomentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/activities': typeof ActivitiesRoute
+  '/activities': typeof ActivitiesRouteWithChildren
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
@@ -86,11 +100,13 @@ export interface FileRoutesByTo {
   '/preview': typeof PreviewRoute
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/timeline/$momentId': typeof TimelineMomentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/activities': typeof ActivitiesRoute
+  '/activities': typeof ActivitiesRouteWithChildren
   '/builder': typeof BuilderRoute
   '/checkout': typeof CheckoutRoute
   '/dashboard': typeof DashboardRoute
@@ -98,6 +114,8 @@ export interface FileRoutesById {
   '/preview': typeof PreviewRoute
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
+  '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/timeline/$momentId': typeof TimelineMomentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +129,8 @@ export interface FileRouteTypes {
     | '/preview'
     | '/shopping-list'
     | '/todo'
+    | '/activities/$activityId'
+    | '/timeline/$momentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +142,8 @@ export interface FileRouteTypes {
     | '/preview'
     | '/shopping-list'
     | '/todo'
+    | '/activities/$activityId'
+    | '/timeline/$momentId'
   id:
     | '__root__'
     | '/'
@@ -133,11 +155,13 @@ export interface FileRouteTypes {
     | '/preview'
     | '/shopping-list'
     | '/todo'
+    | '/activities/$activityId'
+    | '/timeline/$momentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ActivitiesRoute: typeof ActivitiesRoute
+  ActivitiesRoute: typeof ActivitiesRouteWithChildren
   BuilderRoute: typeof BuilderRoute
   CheckoutRoute: typeof CheckoutRoute
   DashboardRoute: typeof DashboardRoute
@@ -145,6 +169,7 @@ export interface RootRouteChildren {
   PreviewRoute: typeof PreviewRoute
   ShoppingListRoute: typeof ShoppingListRoute
   TodoRoute: typeof TodoRoute
+  TimelineMomentIdRoute: typeof TimelineMomentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,12 +237,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TodoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activities/$activityId': {
+      id: '/activities/$activityId'
+      path: '/$activityId'
+      fullPath: '/activities/$activityId'
+      preLoaderRoute: typeof ActivitiesActivityIdRouteImport
+      parentRoute: typeof ActivitiesRoute
+    }
+    '/timeline/$momentId': {
+      id: '/timeline/$momentId'
+      path: '/timeline/$momentId'
+      fullPath: '/timeline/$momentId'
+      preLoaderRoute: typeof TimelineMomentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface ActivitiesRouteChildren {
+  ActivitiesActivityIdRoute: typeof ActivitiesActivityIdRoute
+}
+
+const ActivitiesRouteChildren: ActivitiesRouteChildren = {
+  ActivitiesActivityIdRoute: ActivitiesActivityIdRoute,
+}
+
+const ActivitiesRouteWithChildren = ActivitiesRoute._addFileChildren(
+  ActivitiesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ActivitiesRoute: ActivitiesRoute,
+  ActivitiesRoute: ActivitiesRouteWithChildren,
   BuilderRoute: BuilderRoute,
   CheckoutRoute: CheckoutRoute,
   DashboardRoute: DashboardRoute,
@@ -225,6 +276,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreviewRoute: PreviewRoute,
   ShoppingListRoute: ShoppingListRoute,
   TodoRoute: TodoRoute,
+  TimelineMomentIdRoute: TimelineMomentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
