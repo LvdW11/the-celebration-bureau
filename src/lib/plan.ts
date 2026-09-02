@@ -329,7 +329,7 @@ const timelineTemplate: TimelineMoment[] = [
 ];
 
 function addMinutes(start: string, minutes: number) {
-  const [h, m] = start.split(":").map(Number);
+  const [h = 0, m = 0] = start.split(":").map(Number);
   const total = h * 60 + m + minutes;
   const hh = Math.floor(total / 60) % 24;
   const mm = total % 60;
@@ -588,8 +588,8 @@ export function buildShoppingList(details: PartyDetails): BudgetResult {
     const droppable = kept
       .filter((i) => i.priority !== "essential")
       .sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || b.lineTotal - a.lineTotal);
-    if (droppable.length === 0) break;
     const drop = droppable[0];
+    if (!drop) break;
     kept = kept.filter((i) => i.id !== drop.id);
     skipped.push(drop);
   }
