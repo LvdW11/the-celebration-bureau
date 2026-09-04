@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { ActivityCard } from "@/components/ActivityCard";
