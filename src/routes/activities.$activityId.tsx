@@ -41,6 +41,13 @@ function ActivityDetail() {
   const cost = activityCost(details, activity.productIds);
   const moment = timeline.find((m) => m.id === activity.timelineId);
 
+  const materials = activity.materials(details.guests);
+  const shownPrep = gate.limit(activity.preparation, 1);
+  const hiddenPrep = gate.hidden(activity.preparation, 1);
+  const shownMaterials = gate.limit(materials, 2);
+  const hiddenMaterials = gate.hidden(materials, 2);
+
+
   return (
     <AppShell
       eyebrow={`Activity · ${activity.duration} · ${activity.effort}`}
