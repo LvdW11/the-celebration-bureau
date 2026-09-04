@@ -348,6 +348,163 @@ function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Mov
 /* The planner                                                         */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* Upgrades — how the engine spends headroom, if it is worth spending   */
+/* ------------------------------------------------------------------ */
+
+interface Upgrade {
+  id: string;
+  cost: number;
+  /** Party value (or prep relief) bought by that cost. */
+  gain: number;
+  apply: (s: State) => State;
+  decision: PlanDecision;
+}
+
+/** Value points a dollar has to buy before the engine will spend it. */
+const MIN_VALUE_PER_DOLLAR = 0.12;
+
+function buildUpgrades(details: PartyDetails, state: State, items: PlanItem[]): Upgrade[] {
+  const ups: Upgrade[] = [];
+  const wantsConvenience = details.diy !== "High";
+  const relief = diyAppetite(details.diy);
+
+  // 1. Buy the better version of something the plan downgraded.
+  for (const item of items) {
+    const slotId = item.sourceId;
+    if (!state.subs[slotId]) continue;
+    const slot = productById(slotId);
+    if (!slot) continue;
+    const cost = round(priceFor(slot, details.guests).lineTotal - item.lineTotal);
+    if (cost <= 0) continue;
+    ups.push({
+      id: `un-swap:${slotId}`,
+      cost,
+      gain: Math.max(0.4, slot.partyValue - (productById(state.subs[slotId]!)?.partyValue ?? 0)),
+      apply: (s) => {
+        const subs = { ...s.subs };
+        delete subs[slotId];
+        return { ...s, subs };
+      },
+      decision: {
+        kind: "upgrade",
+        label: `${slot.name}`,
+        reason: "There was room for the better version of something on the table.",
+        saving: -cost,
+      },
+    });
+  }
+
+  // 2. Buy back some of the parent's evening.
+  if (wantsConvenience) {
+    for (const id of state.diy) {
+      const product = productById(resolve(state, id));
+      if (!product?.diy) continue;
+      const cost = round(
+        priceFor(product, details.guests).lineTotal -
+          priceFor(product, details.guests, true).lineTotal,
+      );
+      if (cost <= 0) continue;
+      ups.push({
+        id: `un-diy:${id}`,
+        cost,
+        gain: (product.diy.prepMinutes / 60) * relief,
+        apply: (s) => ({ ...s, diy: s.diy.filter((d) => d !== id) }),
+        decision: {
+          kind: "upgrade",
+          label: `${product.name} — bought, not made`,
+          reason: `The budget carried it, so that is ${product.diy.prepMinutes} minutes back in your evening.`,
+          saving: -cost,
+        },
+      });
+    }
+  }
+
+  // 3. Restore a component the plan had simplified away.
+  for (const c of state.chosen) {
+    for (const droppedId of c.droppedOptional) {
+      const product = productById(resolve(state, droppedId));
+      if (!product) continue;
+      const cost = priceFor(product, details.guests, state.diy.includes(droppedId)).lineTotal;
+      if (cost <= 0) continue;
+      ups.push({
+        id: `restore-optional:${c.activityId}:${droppedId}`,
+        cost,
+        gain: product.partyValue * 0.6,
+        apply: (s) => ({
+          ...s,
+          chosen: s.chosen.map((x) =>
+            x.activityId === c.activityId
+              ? { ...x, droppedOptional: x.droppedOptional.filter((d) => d !== droppedId) }
+              : x,
+          ),
+        }),
+        decision: {
+          kind: "upgrade",
+          label: `${product.name} back in`,
+          reason: "The budget had room for the finishing touch after all.",
+          saving: -cost,
+        },
+      });
+    }
+  }
+
+  // 4. Restore a styling piece the plan had left out.
+  for (const droppedId of state.droppedCore) {
+    const product = productById(resolve(state, droppedId));
+    if (!product) continue;
+    const cost = priceFor(product, details.guests, state.diy.includes(droppedId)).lineTotal;
+    if (cost <= 0) continue;
+    ups.push({
+      id: `restore-core:${droppedId}`,
+      cost,
+      gain: product.partyValue * (product.priority === "recommended" ? 0.8 : 0.5),
+      apply: (s) => ({ ...s, droppedCore: s.droppedCore.filter((d) => d !== droppedId) }),
+      decision: {
+        kind: "upgrade",
+        label: `${product.name} back in`,
+        reason: "A styling piece worth its place once the essentials were covered.",
+        saving: -cost,
+      },
+    });
+  }
+
+  // 5. Step an activity back up to the ready-made version.
+  if (wantsConvenience) {
+    for (const a of selected(details, state)) {
+      if (a.tier.id !== "simple") continue;
+      const ready = a.activity.tiers.find((t) => t.id === "ready");
+      if (!ready) continue;
+      const costOf = (ids: string[]) =>
+        ids.reduce((sum, id) => {
+          const p = productById(resolve(state, id));
+          return p ? sum + priceFor(p, details.guests, state.diy.includes(id)).lineTotal : sum;
+        }, 0);
+      const cost = round(costOf(ready.requiredProductIds) - costOf(a.tier.requiredProductIds));
+      if (cost <= 0) continue;
+      ups.push({
+        id: `tier-up:${a.activity.id}`,
+        cost,
+        gain: ((a.tier.prepMinutes - ready.prepMinutes) / 60) * relief + 1,
+        apply: (s) => ({
+          ...s,
+          chosen: s.chosen.map((c) =>
+            c.activityId === a.activity.id ? { ...c, tierId: "ready" } : c,
+          ),
+        }),
+        decision: {
+          kind: "upgrade",
+          label: `${a.activity.name} — ${ready.label}`,
+          reason: ready.note,
+          saving: -cost,
+        },
+      });
+    }
+  }
+
+  return ups.sort((a, b) => a.id.localeCompare(b.id));
+}
+
 const MAX_STEPS = 60;
 
 export function buildPlan(details: PartyDetails): PartyPlan {
