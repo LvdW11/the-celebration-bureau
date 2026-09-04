@@ -23,6 +23,8 @@ interface Ctx {
   toggleTodo: (id: string) => void;
   unlocked: boolean;
   unlock: () => void;
+  /** False until localStorage has been read, so we never flash paid content. */
+  hydrated: boolean;
   progress: { done: number; total: number; percent: number };
 }
 
