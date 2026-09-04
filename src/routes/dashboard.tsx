@@ -27,9 +27,12 @@ function Dashboard() {
   const gate = useGate();
   const shownTimeline = gate.limit(timeline, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
-  const shownActivities = gate.limit(activities, 2);
-  const shownProducts = gate.spread(budget.items, 3);
+  // The dashboard is an overview: it always shows a taste, and only says what
+  // is missing while the plan is locked.
+  const shownActivities = activities.slice(0, 2);
+  const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
   const hiddenProducts = gate.hidden(budget.items, 3);
+
 
 
   const links = [
