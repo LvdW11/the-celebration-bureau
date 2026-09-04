@@ -6,7 +6,7 @@ import { PaletteProducts } from "@/components/PaletteProducts";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ProductStrip } from "@/components/ProductCard";
 import { usePlan } from "@/lib/party-store";
-import { money, recipes } from "@/lib/plan";
+import { money } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/preview")({
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/preview")({
 });
 
 function Preview() {
-  const { details, timeline, activities, budget, todos } = usePlan();
+  const { details, timeline, activities, budget, todos, menu } = usePlan();
   const gate = useGate();
 
   const shownTimeline = timeline.slice(0, 3);
@@ -47,7 +47,7 @@ function Preview() {
       body: "Preparation, what to say during each activity, materials and cleanup.",
     },
     {
-      title: `${recipes.length} recipes and the ${todos.length}-task schedule`,
+      title: `${menu.length} recipes and the ${todos.length}-task schedule`,
       body: "Scaled ingredients, make-ahead timings and week-by-week preparation.",
     },
   ];
@@ -158,7 +158,7 @@ function Preview() {
             </Link>
           </div>
           <ul className="surface mt-5 divide-y divide-border/70 overflow-hidden">
-            {recipes.slice(0, 4).map((r) => (
+            {menu.slice(0, 4).map((r) => (
               <li key={r.id} className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7">
                 <span className="text-[0.95rem]">{r.name}</span>
                 <span className="eyebrow shrink-0">{r.yield(details)}</span>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useParty } from "@/lib/party-store";
+import { dietaryOptions, type Allergen } from "@/lib/plan";
 
 export const Route = createFileRoute("/builder")({
   head: () => ({
@@ -172,6 +173,48 @@ function Builder() {
 
             <Field label="How much do you want to make yourself?">
               <Chips options={diyLevels} value={details.diy} onChange={(v) => setDetails({ diy: v })} />
+              <p className="mt-3 text-xs text-muted-foreground">
+                A real trade-off: more making means less spending, and the plan changes accordingly.
+              </p>
+            </Field>
+
+            <Field label="Any allergies or dietary requirements?">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDetails({ dietary: [] })}
+                  className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                    details.dietary.length === 0
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  None
+                </button>
+                {dietaryOptions.map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() =>
+                      setDetails({
+                        dietary: details.dietary.includes(o.key)
+                          ? details.dietary.filter((d: Allergen) => d !== o.key)
+                          : [...details.dietary, o.key],
+                      })
+                    }
+                    className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                      details.dietary.includes(o.key)
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Tell us once — every recipe on the tea table respects it.
+              </p>
             </Field>
           </div>
 

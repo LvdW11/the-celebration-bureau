@@ -22,12 +22,29 @@ export type ProductCategory =
   | "Food & drink";
 
 /**
+ * How the quantity of a product behaves as the guest count changes.
+ * - consumable: one per child (or per pack of children), scales with guests
+ * - reusable: one is enough however many children come, and it survives the day
+ * - fixed: a single fixed-cost element (a backdrop, the cake stand moment)
+ */
+export type ProductNature = "consumable" | "reusable" | "fixed";
+
+/** A homemade stand-in the planner can choose instead of buying. */
+export interface DiyOption {
+  name: string;
+  /** Materials cost for the homemade version. */
+  price: number;
+  prepMinutes: number;
+  note: string;
+}
+
+/**
  * A single purchasable item. Products are referenced by id from activities,
  * timeline moments, to-do tasks and the palette, so the same product can
  * appear in many places without being duplicated.
  *
- * `price` and `affiliateUrl` are intentionally kept in one place so this
- * catalogue can later be replaced by a real affiliate/product API.
+ * The planning metadata (`nature`, `partyValue`, `diy`, `buffer`) is what the
+ * budget engine reasons with — see engine.ts.
  */
 export interface Product {
   id: string;
@@ -52,6 +69,18 @@ export interface Product {
   alternativeId?: string;
   /** Non-affiliate planning line (groceries, bakery) — no retailer link. */
   generic?: boolean;
+
+  /* ---- planning metadata ---- */
+  /** How quantity responds to the guest count. */
+  nature: ProductNature;
+  /** 0–10: what this contributes to the party the child remembers. */
+  partyValue: number;
+  /** Extra children to cover on consumables, so nothing runs out. */
+  buffer?: number;
+  /** A homemade alternative the planner may pick under budget pressure. */
+  diy?: DiyOption;
+  /** A ready-made convenience purchase — the first thing High DIY reconsiders. */
+  convenience?: boolean;
 }
 
 const THEME = "Elegant Magical Princess";
@@ -74,6 +103,16 @@ export const products: Product[] = [
     activityIds: ["crown-decorating"],
     timelineIds: ["arrival"],
     todoIds: ["decor-kit", "printables"],
+    nature: "consumable",
+    partyValue: 8,
+    buffer: 2,
+    convenience: true,
+    diy: {
+      name: "Crowns cut from gold cardstock",
+      price: 5.49,
+      prepMinutes: 45,
+      note: "Print the Bureau crown template onto gold card and cut them the evening before.",
+    },
   },
   {
     id: "craft-gems",
@@ -92,6 +131,8 @@ export const products: Product[] = [
     activityIds: ["crown-decorating", "garden-hunt"],
     timelineIds: ["arrival", "hunt"],
     todoIds: ["decor-kit"],
+    nature: "consumable",
+    partyValue: 7,
   },
   {
     id: "satin-ribbon",
@@ -110,6 +151,14 @@ export const products: Product[] = [
     activityIds: ["crown-decorating"],
     timelineIds: ["arrival"],
     todoIds: ["decor-kit"],
+    nature: "consumable",
+    partyValue: 5,
+    diy: {
+      name: "Crepe paper streamers, cut into lengths",
+      price: 3.99,
+      prepMinutes: 20,
+      note: "Cut blush crepe paper into 24-inch lengths — it curls beautifully.",
+    },
   },
   {
     id: "balloon-garland",
@@ -128,6 +177,15 @@ export const products: Product[] = [
     activityIds: ["portrait-corner"],
     timelineIds: ["portrait"],
     todoIds: ["decor-kit", "table-set"],
+    nature: "fixed",
+    partyValue: 6,
+    convenience: true,
+    diy: {
+      name: "Loose balloons on fishing line",
+      price: 9.99,
+      prepMinutes: 60,
+      note: "Two bags of blush and ivory balloons threaded onto line — the same look, an hour of work.",
+    },
   },
   {
     id: "ivory-tablecloth",
@@ -146,6 +204,14 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["tea"],
     todoIds: ["decor-kit", "table-set"],
+    nature: "reusable",
+    partyValue: 5,
+    diy: {
+      name: "Kraft paper table runner",
+      price: 6.99,
+      prepMinutes: 15,
+      note: "A paper roll down the centre of the table, with names written at each place.",
+    },
   },
   {
     id: "blush-napkins",
@@ -164,6 +230,9 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["tea"],
     todoIds: ["decor-kit", "table-set"],
+    nature: "consumable",
+    partyValue: 4,
+    buffer: 4,
   },
   {
     id: "scalloped-plates",
@@ -182,6 +251,9 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["tea", "cake"],
     todoIds: ["decor-kit", "table-set"],
+    nature: "consumable",
+    partyValue: 5,
+    buffer: 2,
   },
   {
     id: "gold-rim-cups",
@@ -200,6 +272,9 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["tea"],
     todoIds: ["table-set", "drinks"],
+    nature: "consumable",
+    partyValue: 4,
+    buffer: 2,
   },
   {
     id: "gold-tapers",
@@ -218,6 +293,8 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["cake"],
     todoIds: ["cake"],
+    nature: "fixed",
+    partyValue: 7,
   },
   {
     id: "eucalyptus-stems",
@@ -236,6 +313,15 @@ export const products: Product[] = [
     activityIds: ["portrait-corner"],
     timelineIds: ["portrait", "tea"],
     todoIds: ["decor-kit", "table-set"],
+    nature: "fixed",
+    partyValue: 3,
+    convenience: true,
+    diy: {
+      name: "Cuttings from the garden",
+      price: 0,
+      prepMinutes: 20,
+      note: "Any soft green foliage, cut the morning of and kept in water until you dress the table.",
+    },
   },
   {
     id: "favor-pouches",
@@ -254,6 +340,15 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["farewell"],
     todoIds: ["headcount", "printables"],
+    nature: "consumable",
+    partyValue: 6,
+    buffer: 2,
+    diy: {
+      name: "Folded paper cones tied with ribbon",
+      price: 4.49,
+      prepMinutes: 30,
+      note: "Ivory cardstock rolled into cones — children love them just as much.",
+    },
   },
   {
     id: "chiffon-backdrop",
@@ -272,6 +367,15 @@ export const products: Product[] = [
     activityIds: ["portrait-corner"],
     timelineIds: ["portrait"],
     todoIds: ["decor-kit"],
+    nature: "fixed",
+    partyValue: 6,
+    convenience: true,
+    diy: {
+      name: "A blush sheet or fabric length, pinned",
+      price: 7.99,
+      prepMinutes: 30,
+      note: "Pin a plain blush sheet to the fence and steam out the folds the morning of.",
+    },
   },
   {
     id: "gold-flatware",
@@ -290,6 +394,8 @@ export const products: Product[] = [
     activityIds: [],
     timelineIds: ["tea"],
     todoIds: ["table-set"],
+    nature: "consumable",
+    partyValue: 2,
   },
   {
     id: "cake",
@@ -309,6 +415,15 @@ export const products: Product[] = [
     timelineIds: ["cake"],
     todoIds: ["cake"],
     generic: true,
+    nature: "consumable",
+    partyValue: 9,
+    convenience: true,
+    diy: {
+      name: "Home-baked single-tier cake",
+      price: 18,
+      prepMinutes: 180,
+      note: "Two sponge layers, ivory buttercream, finished with the same gold tapers.",
+    },
   },
   {
     id: "groceries",
@@ -328,6 +443,14 @@ export const products: Product[] = [
     timelineIds: ["tea"],
     todoIds: ["drinks", "prep-food"],
     generic: true,
+    nature: "consumable",
+    partyValue: 8,
+    diy: {
+      name: "Pared-back tea table (baked and assembled at home)",
+      price: 2.4,
+      prepMinutes: 90,
+      note: "The same menu with home-baked shortbread and simpler fillings instead of shop-bought extras.",
+    },
   },
 ];
 

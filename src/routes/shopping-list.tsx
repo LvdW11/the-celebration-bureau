@@ -20,7 +20,7 @@ export const Route = createFileRoute("/shopping-list")({
 });
 
 function ShoppingPage() {
-  const { details, budget } = usePlan();
+  const { details, budget, plan } = usePlan();
   const gate = useGate();
 
   // Totals always reflect the full plan; only the visible rows are limited,
@@ -104,6 +104,23 @@ function ShoppingPage() {
           Every remaining item with its calculated quantity, price, retailer and direct shopping link — all
           fitted inside your ${details.budget} budget.
         </LockedContinuation>
+      ) : null}
+
+      {gate.unlocked && plan.decisions.length > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-xl">How we fitted your budget</h2>
+          <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">
+            {plan.decisions.map((d, i) => (
+              <li key={`${d.kind}-${i}`} className="px-5 py-4 md:px-7">
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="text-[0.95rem]">{d.label}</span>
+                  <span className="shrink-0 text-sm text-muted-foreground">saves {money(d.saving)}</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{d.reason}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {gate.unlocked && budget.skipped.length > 0 ? (

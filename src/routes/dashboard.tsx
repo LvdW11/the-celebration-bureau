@@ -5,7 +5,7 @@ import { PaletteProducts } from "@/components/PaletteProducts";
 import { ProductStrip } from "@/components/ProductCard";
 import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { usePlan, useParty } from "@/lib/party-store";
-import { money, recipes } from "@/lib/plan";
+import { money } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
 
 
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
-  const { details, timeline, activities, budget } = usePlan();
+  const { details, timeline, activities, budget, menu } = usePlan();
   const { progress } = useParty();
   const gate = useGate();
   const shownTimeline = gate.limit(timeline, 3);
@@ -33,7 +33,7 @@ function Dashboard() {
   const hiddenActivities = gate.hidden(activities, 1);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
   const hiddenProducts = gate.hidden(budget.items, 3);
-  const hiddenRecipes = gate.hidden(recipes, 1);
+  const hiddenRecipes = gate.hidden(menu, 1);
 
 
 
