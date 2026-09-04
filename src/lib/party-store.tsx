@@ -73,9 +73,10 @@ export function PartyProvider({ children }: { children: ReactNode }) {
         setDone((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
       unlocked,
       unlock: () => setUnlocked(true),
+      hydrated,
       progress: { done: completed, total, percent: Math.round((completed / total) * 100) },
     };
-  }, [details, done, unlocked]);
+  }, [details, done, unlocked, hydrated]);
 
   return <PartyContext.Provider value={value}>{children}</PartyContext.Provider>;
 }
