@@ -1,8 +1,10 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { ProductGrid } from "@/components/ProductCard";
+import { LockedContinuation } from "@/components/PartyBits";
 import { useParty, usePlan } from "@/lib/party-store";
 import { activityCost, money, productsByIds } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/activities/$activityId")({
   head: () => ({
@@ -29,6 +31,7 @@ function ActivityNotFound() {
 
 function ActivityDetail() {
   const { activityId } = Route.useParams();
+  const gate = useGate();
   const { details } = useParty();
   const { activities, timeline } = usePlan();
   const activity = activities.find((a) => a.id === activityId);
@@ -58,6 +61,13 @@ function ActivityDetail() {
         </div>
       </section>
 
+      {gate.locked ? (
+        <LockedContinuation title="Full instructions are part of the complete plan" className="mt-8">
+          Step-by-step preparation, how to run the activity with {details.guests} children, exact material
+          quantities and cleanup notes.
+        </LockedContinuation>
+      ) : (
+      <>
       <div className="mt-10 grid gap-10 md:grid-cols-2">
         <section>
           <h2 className="text-2xl">Preparation</h2>
@@ -101,6 +111,9 @@ function ActivityDetail() {
           ))}
         </ul>
       </section>
+
+      </>
+      )}
 
       {products.length > 0 ? (
         <section className="mt-12">

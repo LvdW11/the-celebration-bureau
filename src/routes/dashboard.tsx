@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { ProgressBar } from "@/components/PartyBits";
+import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { usePlan, useParty } from "@/lib/party-store";
 import { money } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -19,6 +20,9 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const { details, timeline, activities, budget } = usePlan();
   const { progress } = useParty();
+  const gate = useGate();
+  const shownTimeline = gate.limit(timeline, 3);
+  const hiddenMoments = gate.hidden(timeline, 3);
 
   const links = [
     { to: "/todo", label: "To do", detail: `${progress.total - progress.done} open tasks` },
@@ -67,7 +71,7 @@ function Dashboard() {
         <h2 className="text-2xl">The afternoon</h2>
         <p className="mt-2 text-sm text-muted-foreground">Tap a moment for instructions, prep and what to buy.</p>
         <ol className="mt-5">
-          {timeline.map((t) => (
+          {shownTimeline.map((t) => (
             <li key={t.id}>
               <Link
                 to="/timeline/$momentId"
@@ -84,6 +88,11 @@ function Dashboard() {
             </li>
           ))}
         </ol>
+        {hiddenMoments > 0 ? (
+          <LockedContinuation title={`${hiddenMoments} more moments, through cake and farewell favors`} className="mt-6">
+            The complete running order with timings, instructions and what to prepare for each moment.
+          </LockedContinuation>
+        ) : null}
       </section>
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
