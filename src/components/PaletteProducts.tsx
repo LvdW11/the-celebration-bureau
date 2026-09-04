@@ -54,8 +54,10 @@ export function PaletteProducts({ limit = 3 }: { limit?: number }) {
       {matches.length > 0 ? (
         <>
           <p className="mt-6 text-sm text-muted-foreground">
-            {matches.length} pieces in {current?.name.toLowerCase()}, priced for {details.guests} children.
+            {matches.length} {matches.length === 1 ? "piece" : "pieces"} in{" "}
+            {current?.name.toLowerCase()}, priced for {details.guests} children.
           </p>
+
           <ProductStrip products={matches} className="mt-4" />
           <p className="mt-4 text-sm text-muted-foreground">
             These come from the same catalogue as your{" "}
