@@ -34,28 +34,33 @@ export function PartyProvider({ children }: { children: ReactNode }) {
   const [details, setDetailsState] = useState<PartyDetails>(defaultParty);
   const [done, setDone] = useState<string[]>(["invites", "cake"]);
   const [unlocked, setUnlocked] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from localStorage after mount to avoid SSR mismatches.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<Stored>;
-      if (parsed.details) setDetailsState({ ...defaultParty, ...parsed.details });
-      if (Array.isArray(parsed.done)) setDone(parsed.done);
-      if (typeof parsed.unlocked === "boolean") setUnlocked(parsed.unlocked);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Stored>;
+        if (parsed.details) setDetailsState({ ...defaultParty, ...parsed.details });
+        if (Array.isArray(parsed.done)) setDone(parsed.done);
+        if (typeof parsed.unlocked === "boolean") setUnlocked(parsed.unlocked);
+      }
     } catch {
       /* ignore */
     }
+    setHydrated(true);
   }, []);
 
+  // Only persist once the stored state has been read, so we never overwrite it.
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(KEY, JSON.stringify({ details, done, unlocked }));
     } catch {
       /* ignore */
     }
-  }, [details, done, unlocked]);
+  }, [hydrated, details, done, unlocked]);
 
   const value = useMemo<Ctx>(() => {
     const total = allTodos.length;
