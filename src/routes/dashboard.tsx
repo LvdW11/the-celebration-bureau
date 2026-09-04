@@ -5,7 +5,7 @@ import { PaletteProducts } from "@/components/PaletteProducts";
 import { ProductStrip } from "@/components/ProductCard";
 import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { usePlan, useParty } from "@/lib/party-store";
-import { money } from "@/lib/plan";
+import { money, recipes } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
 
 
@@ -29,9 +29,11 @@ function Dashboard() {
   const hiddenMoments = gate.hidden(timeline, 3);
   // The dashboard is an overview: it always shows a taste, and only says what
   // is missing while the plan is locked.
-  const shownActivities = activities.slice(0, 2);
+  const shownActivities = activities.slice(0, 1);
+  const hiddenActivities = gate.hidden(activities, 1);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
   const hiddenProducts = gate.hidden(budget.items, 3);
+  const hiddenRecipes = gate.hidden(recipes, 1);
 
 
 
@@ -106,13 +108,9 @@ function Dashboard() {
           ))}
         </ol>
         {hiddenMoments > 0 ? (
-          <LockedContinuation
-            compact
-            title={`${hiddenMoments} more moments, through cake and farewell favors`}
-            className="mt-6"
-          >
-            the complete running order with instructions and prep
-          </LockedContinuation>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {hiddenMoments} more moments follow, through cake and farewell favors.
+          </p>
         ) : null}
       </section>
 
@@ -132,6 +130,11 @@ function Dashboard() {
             <ActivityCard key={a.id} activity={a} />
           ))}
         </div>
+        {hiddenActivities > 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {hiddenActivities} more activities with full instructions are in your full plan.
+          </p>
+        ) : null}
       </section>
 
       <section className="mt-12">
@@ -146,9 +149,9 @@ function Dashboard() {
         </p>
         <ProductStrip products={shownProducts} className="mt-5" />
         {hiddenProducts > 0 ? (
-          <LockedContinuation compact title={`${hiddenProducts} more items costed for you`} className="mt-5">
-            with exact quantities, retailers and links
-          </LockedContinuation>
+          <p className="mt-4 text-sm text-muted-foreground">
+            {hiddenProducts} more items with exact quantities, retailers and links are in your full plan.
+          </p>
         ) : null}
       </section>
 
@@ -168,6 +171,17 @@ function Dashboard() {
           </Link>
         ))}
       </section>
+
+      {gate.locked ? (
+        <LockedContinuation
+          title="Unlock the complete party plan"
+          className="mt-12"
+        >
+          Get the full {timeline.length}-moment timeline, step-by-step instructions for all {activities.length}{" "}
+          activities, every shopping item quantified for {details.guests} children, {hiddenRecipes} more recipes with
+          scaled ingredients, and the complete four-week to-do schedule — all for $29.
+        </LockedContinuation>
+      ) : null}
     </AppShell>
   );
 }

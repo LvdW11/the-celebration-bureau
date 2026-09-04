@@ -72,7 +72,20 @@ export function PartyProvider({ children }: { children: ReactNode }) {
       toggleTodo: (id) =>
         setDone((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
       unlocked,
-      unlock: () => setUnlocked(true),
+      unlock: () => {
+        setUnlocked(true);
+        // Persist immediately so a subsequent navigation never outruns the effect.
+        try {
+          const raw = localStorage.getItem(KEY);
+          const parsed = raw ? (JSON.parse(raw) as Partial<Stored>) : {};
+          localStorage.setItem(
+            KEY,
+            JSON.stringify({ details, done, ...parsed, unlocked: true }),
+          );
+        } catch {
+          /* ignore */
+        }
+      },
       hydrated,
       progress: { done: completed, total, percent: Math.round((completed / total) * 100) },
     };
