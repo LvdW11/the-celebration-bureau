@@ -277,7 +277,9 @@ function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Mov
     moves.push({
       id: `swap:${item.sourceId}`,
       saving,
-      valueCost: Math.max(0.4, slot.partyValue - alt.partyValue),
+      // Downgrading a high-value element (the cake) costs far more party value
+      // than downgrading a plate, even for the same drop in score.
+      valueCost: Math.max(0.4, (slot.partyValue - alt.partyValue) * (slot.partyValue / 4)),
       apply: (s) => ({ ...s, subs: { ...s.subs, [item.sourceId]: alt.id } }),
       decision: {
         kind: "substitute",
