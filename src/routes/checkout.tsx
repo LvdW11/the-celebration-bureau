@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SectionHeader, SectionTabBar } from "@/components/SectionNav";
 import { useParty } from "@/lib/party-store";
 
 export const Route = createFileRoute("/checkout")({
