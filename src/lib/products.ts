@@ -81,6 +81,11 @@ export interface Product {
   diy?: DiyOption;
   /** A ready-made convenience purchase — the first thing High DIY reconsiders. */
   convenience?: boolean;
+  /**
+   * Plainer stand-ins that only ever enter a plan as the `alternativeId` of
+   * another product. They are never chosen on their own merits.
+   */
+  alternativeOnly?: boolean;
 }
 
 const THEME = "Elegant Magical Princess";
