@@ -27,6 +27,10 @@ function Dashboard() {
   const gate = useGate();
   const shownTimeline = gate.limit(timeline, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
+  const shownActivities = gate.limit(activities, 2);
+  const shownProducts = gate.spread(budget.items, 3);
+  const hiddenProducts = gate.hidden(budget.items, 3);
+
 
   const links = [
     { to: "/todo", label: "To do", detail: `${progress.total - progress.done} open tasks` },
