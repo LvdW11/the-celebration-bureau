@@ -112,7 +112,8 @@ function Dashboard() {
         </ol>
         {hiddenMoments > 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            {hiddenMoments} more moments follow, through cake and farewell favors.
+            {hiddenMoments} more moments follow, through cake and farewell favors. Unlock the full plan
+            to see the complete afternoon, every moment and transition.
           </p>
         ) : null}
       </section>
