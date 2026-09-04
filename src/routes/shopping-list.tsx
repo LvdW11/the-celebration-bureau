@@ -21,9 +21,10 @@ function ShoppingPage() {
   const { details, budget } = usePlan();
   const gate = useGate();
 
-  // Totals always reflect the full plan; only the visible rows are limited.
-  const visibleItems = gate.limit(budget.items, 3);
-  const hiddenCount = gate.hidden(budget.items, 3);
+  // Totals always reflect the full plan; only the visible rows are limited,
+  // and they are sampled across categories so the scope is obvious.
+  const visibleItems = gate.spread(budget.items, 4);
+  const hiddenCount = gate.hidden(budget.items, 4);
 
   const categories = budget.byCategory
     .map((c) => ({
@@ -32,6 +33,7 @@ function ShoppingPage() {
       items: visibleItems.filter((i) => i.category === c.category),
     }))
     .filter((c) => c.items.length > 0);
+
 
   return (
     <AppShell
