@@ -7,12 +7,15 @@ export function AppShell({
   title,
   intro,
   action,
+  hideBack,
   children,
 }: {
   eyebrow: string;
   title: string;
   intro?: string;
   action?: ReactNode;
+  /** The party overview itself has nowhere to go back to. */
+  hideBack?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -20,7 +23,7 @@ export function AppShell({
       <SectionHeader />
 
       <main className="mx-auto max-w-5xl px-5 py-10 md:px-8 md:py-14">
-        <BackToParty className="mb-6" />
+        {hideBack ? null : <BackToParty className="mb-6" />}
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-3 text-4xl md:text-5xl">{title}</h1>
         {intro ? (
