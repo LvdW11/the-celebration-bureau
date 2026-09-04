@@ -21,7 +21,7 @@ Every locked surface changes from "hidden" to "a real, complete-looking sample".
 
 ### Party / Dashboard
 Free: child name, age, guest count, theme, venue, budget, date and start time (already there); progress; budget total and remaining; **interactive palette strip** (new, see below); first 3 timeline moments, now clearly clickable; **1 activity teaser card**; **3 shopping products with image, price and retailer**; the four section links.
-Locked: remaining timeline moments, remaining activities and the rest of the shopping list — each behind its own short continuation line, not one big wall.
+Locked: the rest of the complete plan is gathered into **one main unlock/continuation block at the bottom of the Dashboard**. The curated samples above it are shown naturally as part of the overview; any "more" cues inside sections are subtle text links or short lines rather than prominent paywalls. This keeps the Dashboard feeling like a single coherent summary rather than a sequence of separate locked sections.
 
 ### Timeline detail (`/timeline/$momentId`) — biggest change
 Free (replacing the current all-or-nothing block): time, end time, duration, title, what happens, **the first instruction step**, **the first 1–2 preparation items**, the linked activity link, and up to 2 related products with real price/retailer.
@@ -77,7 +77,7 @@ Not touched: `party-store.tsx` state shape, `plan.ts` planning/budget logic, `pr
 ## Risks
 
 - Showing more free content weakens the unlock if the split is too generous — the counts above are the lever, and they are all single constants, easy to tune after visual review.
-- Multiple small continuation blocks per page could feel nagging; mitigation is one compact inline line per section and at most one full block per page.
+- The Dashboard must end with one strong continuation block; individual section pages may still use their own continuation blocks because the user is exploring that specific section in depth. The risk is the Dashboard feeling like several paywalls — mitigated by the single bottom block and subtle inline "more" cues only.
 - Palette interaction adds client state on a page that must stay stable before hydration — selection defaults to the first colour and renders identically on server and client.
 - `productsForColor` ignores the budget engine's drops, so a palette product may not appear in the shopping list. Mitigation: label palette results as "matches your palette" rather than implying they are all in the list.
 
