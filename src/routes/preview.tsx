@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import previewCover from "@/assets/preview-cover.jpg";
+import { SectionHeader, SectionTabBar } from "@/components/SectionNav";
 import { usePlan } from "@/lib/party-store";
 
 export const Route = createFileRoute("/preview")({
@@ -89,7 +90,8 @@ function Preview() {
             ))}
           </ol>
           <p className="mt-4 text-sm text-muted-foreground">
-            More moments follow, through cake and farewell favors.
+            More moments follow, through cake and farewell favors. Use the navigation above to preview your
+          to-do list, shopping list, activities and food.
           </p>
         </section>
 
@@ -115,6 +117,8 @@ function Preview() {
           </Link>
         </section>
       </main>
+
+      <SectionTabBar />
     </div>
   );
 }
