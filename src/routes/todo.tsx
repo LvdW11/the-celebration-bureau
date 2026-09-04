@@ -1,14 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { todos as initialTodos } from "@/lib/party";
+import { ProgressBar } from "@/components/PartyBits";
+import { useParty, usePlan } from "@/lib/party-store";
 
 export const Route = createFileRoute("/todo")({
   head: () => ({
     meta: [
       { title: "To Do — The Celebration Bureau" },
-      { name: "description", content: "The week-by-week checklist leading up to Emma's princess party." },
+      { name: "description", content: "The week-by-week checklist leading up to your princess party." },
       { property: "og:title", content: "To Do — The Celebration Bureau" },
       { property: "og:description", content: "Everything to do, in the order to do it." },
     ],
@@ -17,42 +17,70 @@ export const Route = createFileRoute("/todo")({
 });
 
 function TodoPage() {
-  const [done, setDone] = useState<number[]>(initialTodos.filter((t) => t.done).map((t) => t.id));
-
-  const toggle = (id: number) =>
-    setDone((d) => (d.includes(id) ? d.filter((x) => x !== id) : [...d, id]));
+  const { details, todos } = usePlan();
+  const { done, toggleTodo } = useParty();
 
   return (
     <AppShell
       eyebrow="To do"
       title="Four weeks, calmly"
-      intro="Tick things off as you go. Nothing here takes more than an afternoon."
+      intro={`Tick things off as you go. Everything is sized for ${details.guests} children.`}
     >
+      <div className="surface mb-8 p-6">
+        <ProgressBar />
+      </div>
+
       <ul className="surface divide-y divide-border/70 overflow-hidden">
-        {initialTodos.map((t) => {
+        {todos.map((t) => {
           const isDone = done.includes(t.id);
           return (
             <li key={t.id}>
-              <button
-                type="button"
-                onClick={() => toggle(t.id)}
-                className="flex w-full items-start gap-4 px-5 py-5 text-left transition-colors hover:bg-secondary/50 md:px-7"
-              >
-                <span
+              <div className="flex items-start gap-4 px-5 py-5 md:px-7">
+                <button
+                  type="button"
+                  onClick={() => toggleTodo(t.id)}
+                  aria-label={isDone ? `Mark ${t.task} as not done` : `Mark ${t.task} as done`}
                   className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                     isDone ? "border-sage bg-sage" : "border-border"
                   }`}
                 >
                   {isDone ? <Check className="size-3 text-sage-foreground" strokeWidth={2.5} /> : null}
-                </span>
+                </button>
                 <span className="min-w-0 flex-1">
                   <span className={`block text-[0.95rem] ${isDone ? "text-muted-foreground line-through" : ""}`}>
                     {t.task}
                   </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">{t.note}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{t.note(details)}</span>
+                  <span className="mt-2 flex flex-wrap gap-3 text-sm">
+                    {t.productIds.length > 0 ? (
+                      <Link to="/shopping-list" className="text-gold underline-offset-4 hover:underline">
+                        Shop {t.productIds.length} items
+                      </Link>
+                    ) : null}
+                    {t.activityIds.map((id) => (
+                      <Link
+                        key={id}
+                        to="/activities/$activityId"
+                        params={{ activityId: id }}
+                        className="text-gold underline-offset-4 hover:underline"
+                      >
+                        Activity
+                      </Link>
+                    ))}
+                    {t.timelineIds.map((id) => (
+                      <Link
+                        key={id}
+                        to="/timeline/$momentId"
+                        params={{ momentId: id }}
+                        className="text-gold underline-offset-4 hover:underline"
+                      >
+                        Timeline
+                      </Link>
+                    ))}
+                  </span>
                 </span>
                 <span className="eyebrow mt-1 shrink-0 text-right">{t.due}</span>
-              </button>
+              </div>
             </li>
           );
         })}

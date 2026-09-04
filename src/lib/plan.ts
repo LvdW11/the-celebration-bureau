@@ -374,7 +374,7 @@ export const allTodos: TodoTask[] = [
     task: "Send digital invitations",
     due: "4 weeks before",
     week: "4 weeks before",
-    note: (d) => `${d.guests} guests · RSVP one week ahead`,
+    note: (d) => `${d.guests} children invited · RSVP one week ahead`,
     productIds: [],
     activityIds: [],
     timelineIds: [],

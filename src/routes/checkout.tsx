@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { party } from "@/lib/party";
+import { useParty } from "@/lib/party-store";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function Checkout() {
+  const { details } = useParty();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-6 md:px-8">
@@ -34,7 +35,7 @@ function Checkout() {
             <div>
               <p className="text-[0.95rem]">Complete party plan</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {party.childName}, turning {party.age} · {party.theme}
+                {details.childName}, turning {details.age} · {details.theme}
               </p>
             </div>
             <span className="font-display text-2xl">$29</span>
