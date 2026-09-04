@@ -28,15 +28,14 @@ const locked = [
 function Preview() {
   const { details, timeline } = usePlan();
   return (
-    <div className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-4xl items-center justify-between px-5 py-6 md:px-8">
-        <Link to="/" className="font-display text-lg tracking-tight">
-          The Celebration Bureau
-        </Link>
-        <Link to="/builder" className="text-sm text-muted-foreground hover:text-foreground">
-          Edit details
-        </Link>
-      </header>
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
+      <SectionHeader
+        right={
+          <Link to="/builder" className="hover:text-foreground">
+            Edit details
+          </Link>
+        }
+      />
 
       <main className="mx-auto max-w-4xl px-5 py-10 pb-24 md:px-8 md:py-14">
         <p className="eyebrow">Free preview</p>
