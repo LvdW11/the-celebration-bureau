@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
+
 import { AppShell } from "@/components/AppShell";
 import { LockedContinuation } from "@/components/PartyBits";
 import { useParty, usePlan } from "@/lib/party-store";
