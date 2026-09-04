@@ -21,8 +21,11 @@ function TodoPage() {
   const { details, todos } = usePlan();
   const { done, toggleTodo } = useParty();
   const gate = useGate();
-  const shown = gate.limit(todos, 3);
-  const hiddenCount = gate.hidden(todos, 3);
+  // Sampled across the four weeks so the free view shows the shape of the
+  // whole schedule. Progress still counts every task in the plan.
+  const shown = gate.spread(todos, 4);
+  const hiddenCount = gate.hidden(todos, 4);
+
 
   return (
     <AppShell

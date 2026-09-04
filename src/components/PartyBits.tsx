@@ -56,11 +56,31 @@ export function LockedContinuation({
   title,
   children,
   className,
+  compact,
 }: {
   title: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
+  /** Inline variant for use inside a section, between real content. */
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-dashed border-border bg-secondary/40 px-5 py-4 ${className ?? ""}`}
+      >
+        <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
+        <p className="flex-1 text-sm text-muted-foreground">
+          <span className="text-foreground">{title}</span>
+          {children ? <> — {children}</> : null}
+        </p>
+        <Link to="/checkout" className="text-sm text-gold underline-offset-4 hover:underline">
+          Unlock — $29
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`rounded-2xl border border-dashed border-border bg-secondary/40 p-6 md:p-7 ${className ?? ""}`}
@@ -81,3 +101,4 @@ export function LockedContinuation({
     </div>
   );
 }
+

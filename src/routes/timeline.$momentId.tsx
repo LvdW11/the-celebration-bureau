@@ -41,29 +41,41 @@ function TimelineDetail() {
   const activity = moment.activityId ? allActivities.find((a) => a.id === moment.activityId) : undefined;
   const relatedTodos = todos.filter((t) => moment.todoIds.includes(t.id));
 
+  // Locked: show the shape of the moment (first step, first prep items) but
+  // not the complete workflow.
+  const instructions = gate.limit(moment.instructions, 1);
+  const hiddenSteps = gate.hidden(moment.instructions, 1);
+  const prepare = gate.limit(moment.prepare, 2);
+  const hiddenPrep = gate.hidden(moment.prepare, 2);
+  const shownProducts = gate.limit(products, 2);
+  const hiddenProducts = gate.hidden(products, 2);
+
   return (
     <AppShell
       eyebrow={`${moment.time} – ${moment.endTime} · ${moment.lengthMin} minutes`}
       title={moment.title}
       intro={moment.detail}
     >
-      {gate.locked ? (
-        <LockedContinuation title="Instructions and preparation are part of the complete plan">
-          What to do minute by minute, everything to prepare beforehand and the to-do tasks tied to this
-          moment.
-        </LockedContinuation>
-      ) : (
       <div className="grid gap-10 md:grid-cols-2">
         <section>
           <h2 className="text-2xl">On the day</h2>
           <ol className="mt-4 space-y-3">
-            {moment.instructions.map((step, i) => (
+            {instructions.map((step, i) => (
               <li key={i} className="flex gap-4">
                 <span className="font-display text-lg text-gold">{i + 1}</span>
                 <p className="text-[0.95rem] leading-relaxed">{step}</p>
               </li>
             ))}
           </ol>
+          {hiddenSteps > 0 ? (
+            <LockedContinuation
+              compact
+              title={`${hiddenSteps} more steps for this moment`}
+              className="mt-5"
+            >
+              the minute-by-minute run of {moment.title.toLowerCase()}
+            </LockedContinuation>
+          ) : null}
 
           {activity ? (
             <p className="mt-6 text-sm text-muted-foreground">
@@ -83,15 +95,20 @@ function TimelineDetail() {
         <section>
           <h2 className="text-2xl">Preparation</h2>
           <ul className="mt-4 space-y-3">
-            {moment.prepare.map((p, i) => (
+            {prepare.map((p, i) => (
               <li key={i} className="flex gap-4">
                 <span className="mt-2 size-1.5 shrink-0 rounded-full bg-blush" />
                 <p className="text-[0.95rem] leading-relaxed">{p}</p>
               </li>
             ))}
           </ul>
+          {hiddenPrep > 0 ? (
+            <LockedContinuation compact title={`${hiddenPrep} more preparation items`} className="mt-5">
+              everything to set up beforehand
+            </LockedContinuation>
+          ) : null}
 
-          {relatedTodos.length > 0 ? (
+          {gate.unlocked && relatedTodos.length > 0 ? (
             <div className="mt-6">
               <p className="eyebrow">On your to-do list</p>
               <ul className="mt-3 space-y-2">
@@ -109,17 +126,21 @@ function TimelineDetail() {
         </section>
       </div>
 
-      )}
-
-      {products.length > 0 ? (
+      {shownProducts.length > 0 ? (
         <section className="mt-12">
           <h2 className="text-2xl">What you'll need</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Quantities are calculated for {details.guests} guests. Tap a product to shop it.
           </p>
-          <ProductGrid products={products} className="mt-5" />
+          <ProductGrid products={shownProducts} className="mt-5" />
+          {hiddenProducts > 0 ? (
+            <LockedContinuation compact title={`${hiddenProducts} more items for this moment`} className="mt-5">
+              with quantities and retailers
+            </LockedContinuation>
+          ) : null}
         </section>
       ) : null}
     </AppShell>
   );
 }
+

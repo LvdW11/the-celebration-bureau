@@ -41,6 +41,13 @@ function ActivityDetail() {
   const cost = activityCost(details, activity.productIds);
   const moment = timeline.find((m) => m.id === activity.timelineId);
 
+  const materials = activity.materials(details.guests);
+  const shownPrep = gate.limit(activity.preparation, 1);
+  const hiddenPrep = gate.hidden(activity.preparation, 1);
+  const shownMaterials = gate.limit(materials, 2);
+  const hiddenMaterials = gate.hidden(materials, 2);
+
+
   return (
     <AppShell
       eyebrow={`Activity · ${activity.duration} · ${activity.effort}`}
@@ -61,41 +68,52 @@ function ActivityDetail() {
         </div>
       </section>
 
-      {gate.locked ? (
-        <LockedContinuation title="Full instructions are part of the complete plan" className="mt-8">
-          Step-by-step preparation, how to run the activity with {details.guests} children, exact material
-          quantities and cleanup notes.
-        </LockedContinuation>
-      ) : (
-      <>
       <div className="mt-10 grid gap-10 md:grid-cols-2">
         <section>
           <h2 className="text-2xl">Preparation</h2>
           <ol className="mt-4 space-y-3">
-            {activity.preparation.map((step, i) => (
+            {shownPrep.map((step, i) => (
               <li key={i} className="flex gap-4">
                 <span className="font-display text-lg text-gold">{i + 1}</span>
                 <p className="text-[0.95rem] leading-relaxed">{step}</p>
               </li>
             ))}
           </ol>
+          {hiddenPrep > 0 ? (
+            <LockedContinuation compact title={`${hiddenPrep} more preparation steps`} className="mt-5">
+              everything to make ready before the children arrive
+            </LockedContinuation>
+          ) : null}
         </section>
 
         <section>
           <h2 className="text-2xl">During the party</h2>
-          <ol className="mt-4 space-y-3">
-            {activity.during.map((step, i) => (
-              <li key={i} className="flex gap-4">
-                <span className="font-display text-lg text-gold">{i + 1}</span>
-                <p className="text-[0.95rem] leading-relaxed">{step}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-6 rounded-2xl bg-secondary/50 p-5">
-            <p className="eyebrow">Cleanup</p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activity.cleanup}</p>
-          </div>
+          {gate.locked ? (
+            <>
+              <p className="mt-4 text-[0.95rem] leading-relaxed text-muted-foreground">
+                {activity.during.length} steps guide you through running this with {details.guests} children,
+                followed by cleanup notes.
+              </p>
+              <LockedContinuation compact title="How to run it, and clean up after" className="mt-5">
+                the full sequence and cleanup
+              </LockedContinuation>
+            </>
+          ) : (
+            <>
+              <ol className="mt-4 space-y-3">
+                {activity.during.map((step, i) => (
+                  <li key={i} className="flex gap-4">
+                    <span className="font-display text-lg text-gold">{i + 1}</span>
+                    <p className="text-[0.95rem] leading-relaxed">{step}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-6 rounded-2xl bg-secondary/50 p-5">
+                <p className="eyebrow">Cleanup</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activity.cleanup}</p>
+              </div>
+            </>
+          )}
         </section>
       </div>
 
@@ -103,17 +121,19 @@ function ActivityDetail() {
         <h2 className="text-2xl">Materials</h2>
         <p className="mt-2 text-sm text-muted-foreground">Exact quantities for {details.guests} guests.</p>
         <ul className="mt-4 space-y-3">
-          {activity.materials(details.guests).map((m, i) => (
+          {shownMaterials.map((m, i) => (
             <li key={i} className="flex gap-4">
               <span className="mt-2 size-1.5 shrink-0 rounded-full bg-blush" />
               <p className="text-[0.95rem] leading-relaxed">{m}</p>
             </li>
           ))}
         </ul>
+        {hiddenMaterials > 0 ? (
+          <LockedContinuation compact title={`${hiddenMaterials} more materials, with quantities`} className="mt-5">
+            scaled for {details.guests} children
+          </LockedContinuation>
+        ) : null}
       </section>
-
-      </>
-      )}
 
       {products.length > 0 ? (
         <section className="mt-12">
@@ -125,3 +145,4 @@ function ActivityDetail() {
     </AppShell>
   );
 }
+

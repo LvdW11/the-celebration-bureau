@@ -2,7 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import previewCover from "@/assets/preview-cover.jpg";
 import { SectionHeader, SectionTabBar } from "@/components/SectionNav";
+import { PaletteProducts } from "@/components/PaletteProducts";
+import { ActivityCard } from "@/components/ActivityCard";
+import { ProductStrip } from "@/components/ProductCard";
 import { usePlan } from "@/lib/party-store";
+import { money, recipes } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/preview")({
   head: () => ({
@@ -19,15 +24,34 @@ export const Route = createFileRoute("/preview")({
   component: Preview,
 });
 
-const locked = [
-  { title: "Full shopping list", body: "Every item, quantity and cost, kept inside your budget." },
-  { title: "Activity instructions", body: "Prep times, materials and how to run each moment." },
-  { title: "Food & drink plan", body: "Tea-table menu with make-ahead timings." },
-  { title: "To-do schedule", body: "What to do each week, starting four weeks out." },
-];
-
 function Preview() {
-  const { details, timeline } = usePlan();
+  const { details, timeline, activities, budget, todos } = usePlan();
+  const gate = useGate();
+
+  const shownTimeline = timeline.slice(0, 3);
+  const hiddenMoments = gate.hidden(timeline, 3);
+  const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
+  const firstActivity = activities[0];
+
+  const locked = [
+    {
+      title: `The complete ${timeline.length}-moment timeline`,
+      body: `Every moment from ${timeline[0]?.time} to the last farewell, with instructions and preparation.`,
+    },
+    {
+      title: `All ${budget.items.length} shopping items`,
+      body: `Exact quantities for ${details.guests} children, ${money(budget.total)} inside your $${details.budget} budget.`,
+    },
+    {
+      title: `${activities.length} activities, run step by step`,
+      body: "Preparation, what to say during each activity, materials and cleanup.",
+    },
+    {
+      title: `${recipes.length} recipes and the ${todos.length}-task schedule`,
+      body: "Scaled ingredients, make-ahead timings and week-by-week preparation.",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <SectionHeader
@@ -47,6 +71,12 @@ function Preview() {
           Turning {details.age} · {details.guests} children · {details.venue.toLowerCase()} · ${details.budget} budget ·{" "}
           {details.diy.toLowerCase()} DIY
         </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          You can change these details anytime — your plan will adjust.{" "}
+          <Link to="/builder" className="text-gold underline-offset-4 hover:underline">
+            Edit details
+          </Link>
+        </p>
 
         <div className="mt-8 overflow-hidden rounded-3xl">
           <img
@@ -58,41 +88,83 @@ function Preview() {
           />
         </div>
 
-        <section className="mt-12">
-          <h2 className="text-2xl">The palette</h2>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { name: "Warm ivory", cls: "bg-ivory" },
-              { name: "Soft blush", cls: "bg-blush" },
-              { name: "Sage", cls: "bg-sage" },
-              { name: "Muted gold", cls: "bg-gold" },
-            ].map((c) => (
-              <div key={c.name} className="surface overflow-hidden">
-                <div className={`h-20 ${c.cls}`} />
-                <p className="px-4 py-3 text-xs text-muted-foreground">{c.name}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="mt-12">
+          <PaletteProducts />
+        </div>
 
         <section className="mt-12">
           <h2 className="text-2xl">The afternoon</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{details.date}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {details.date} · tap a moment to see how it runs.
+          </p>
           <ol className="mt-6 space-y-0">
-            {timeline.slice(0, 3).map((t) => (
-              <li key={t.id} className="flex gap-5 border-b border-border/70 py-5">
-                <span className="w-14 shrink-0 font-display text-lg text-gold">{t.time}</span>
-                <div>
-                  <p className="text-[0.95rem]">{t.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{t.detail}</p>
-                </div>
+            {shownTimeline.map((t) => (
+              <li key={t.id}>
+                <Link
+                  to="/timeline/$momentId"
+                  params={{ momentId: t.id }}
+                  className="flex gap-5 border-b border-border/70 py-5 transition-colors hover:bg-secondary/40"
+                >
+                  <span className="w-14 shrink-0 font-display text-lg text-gold">{t.time}</span>
+                  <span className="flex-1">
+                    <span className="block text-[0.95rem]">{t.title}</span>
+                    <span className="mt-1 block text-sm text-muted-foreground">{t.detail}</span>
+                  </span>
+                  <span className="self-center text-gold">→</span>
+                </Link>
               </li>
             ))}
           </ol>
-          <p className="mt-4 text-sm text-muted-foreground">
-            More moments follow, through cake and farewell favors. Use the navigation above to preview your
-          to-do list, shopping list, activities and food.
+          {hiddenMoments > 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">
+              {hiddenMoments} more moments follow, through cake and farewell favors.
+            </p>
+          ) : null}
+        </section>
+
+        {firstActivity ? (
+          <section className="mt-12">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-2xl">One of your activities</h2>
+              <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
+                See all {activities.length}
+              </Link>
+            </div>
+            <div className="mt-5">
+              <ActivityCard activity={firstActivity} />
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mt-12">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-2xl">We did the shopping research</h2>
+            <Link to="/shopping-list" className="text-sm text-gold underline-offset-4 hover:underline">
+              {budget.items.length} items · {money(budget.total)}
+            </Link>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Quantities calculated for {details.guests} children, {money(budget.remaining)} still free in your
+            budget.
           </p>
+          <ProductStrip products={shownProducts} className="mt-5" />
+        </section>
+
+        <section className="mt-12">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-2xl">The tea table</h2>
+            <Link to="/food" className="text-sm text-gold underline-offset-4 hover:underline">
+              See the menu
+            </Link>
+          </div>
+          <ul className="surface mt-5 divide-y divide-border/70 overflow-hidden">
+            {recipes.slice(0, 4).map((r) => (
+              <li key={r.id} className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7">
+                <span className="text-[0.95rem]">{r.name}</span>
+                <span className="eyebrow shrink-0">{r.yield(details)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="mt-14 rounded-3xl border border-border bg-secondary/50 p-6 md:p-10">

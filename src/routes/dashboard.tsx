@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { ActivityCard } from "@/components/ActivityCard";
+import { PaletteProducts } from "@/components/PaletteProducts";
+import { ProductStrip } from "@/components/ProductCard";
 import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { usePlan, useParty } from "@/lib/party-store";
 import { money } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -23,6 +27,13 @@ function Dashboard() {
   const gate = useGate();
   const shownTimeline = gate.limit(timeline, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
+  // The dashboard is an overview: it always shows a taste, and only says what
+  // is missing while the plan is locked.
+  const shownActivities = activities.slice(0, 2);
+  const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
+  const hiddenProducts = gate.hidden(budget.items, 3);
+
+
 
   const links = [
     { to: "/todo", label: "To do", detail: `${progress.total - progress.done} open tasks` },
@@ -41,10 +52,16 @@ function Dashboard() {
       title={`${details.childName} is turning ${details.age}`}
       intro={`${details.theme} · ${details.guests} children · ${details.venue.toLowerCase()} · $${details.budget} budget`}
       action={
-        <Link to="/builder" className="text-sm text-gold underline-offset-4 hover:underline">
-          Edit party details
-        </Link>
+        <span className="block text-right">
+          <Link to="/builder" className="text-sm text-gold underline-offset-4 hover:underline">
+            Edit party details
+          </Link>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Change these anytime. Your plan will adjust.
+          </span>
+        </span>
       }
+
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="surface p-6">
@@ -89,11 +106,52 @@ function Dashboard() {
           ))}
         </ol>
         {hiddenMoments > 0 ? (
-          <LockedContinuation title={`${hiddenMoments} more moments, through cake and farewell favors`} className="mt-6">
-            The complete running order with timings, instructions and what to prepare for each moment.
+          <LockedContinuation
+            compact
+            title={`${hiddenMoments} more moments, through cake and farewell favors`}
+            className="mt-6"
+          >
+            the complete running order with instructions and prep
           </LockedContinuation>
         ) : null}
       </section>
+
+      <section className="mt-12">
+        <PaletteProducts />
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl">Activities</h2>
+          <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
+            See all {activities.length}
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          {shownActivities.map((a) => (
+            <ActivityCard key={a.id} activity={a} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl">From your shopping list</h2>
+          <Link to="/shopping-list" className="text-sm text-gold underline-offset-4 hover:underline">
+            {budget.items.length} items · {money(budget.total)}
+          </Link>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Researched, quantified for {details.guests} children and kept inside your ${details.budget} budget.
+        </p>
+        <ProductStrip products={shownProducts} className="mt-5" />
+        {hiddenProducts > 0 ? (
+          <LockedContinuation compact title={`${hiddenProducts} more items costed for you`} className="mt-5">
+            with exact quantities, retailers and links
+          </LockedContinuation>
+        ) : null}
+      </section>
+
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
         {links.map((l) => (

@@ -21,7 +21,10 @@ function FoodPage() {
   const { details } = useParty();
   const teaTime = timelineFor(details).find((m) => m.id === "tea")?.time;
   const gate = useGate();
-  const detailed = gate.limit(recipes, 1).map((r) => r.id);
+  // One dish is fully written out; a second shows its ingredient list so the
+  // scaling is visible. The rest keep names and yields.
+  const full = gate.limit(recipes, 1).map((r) => r.id);
+  const ingredientsOnly = gate.limit(recipes, 2).map((r) => r.id);
   const hiddenCount = gate.hidden(recipes, 1);
 
   const courses = Array.from(new Set(recipes.map((r) => r.course))).map((course) => ({
@@ -46,22 +49,30 @@ function FoodPage() {
                     <p className="text-[0.95rem]">{r.name}</p>
                     <span className="eyebrow shrink-0">{r.yield(details)}</span>
                   </div>
-                  {detailed.includes(r.id) ? (
-                  <>
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {r.ingredients(details).map((i) => (
-                      <li key={i} className="rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground">
-                        {i}
-                      </li>
-                    ))}
-                  </ul>
-                  <ol className="mt-3 space-y-1 text-sm text-muted-foreground">
-                    {r.method.map((m) => (
-                      <li key={m}>{m}</li>
-                    ))}
-                  </ol>
-                  <p className="mt-2 text-sm text-muted-foreground">{r.makeAhead}</p>
-                  </>
+
+                  {ingredientsOnly.includes(r.id) ? (
+                    <ul className="mt-3 flex flex-wrap gap-2">
+                      {r.ingredients(details).map((i) => (
+                        <li key={i} className="rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground">
+                          {i}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {full.includes(r.id) ? (
+                    <>
+                      <ol className="mt-3 space-y-1 text-sm text-muted-foreground">
+                        {r.method.map((m) => (
+                          <li key={m}>{m}</li>
+                        ))}
+                      </ol>
+                      <p className="mt-2 text-sm text-muted-foreground">{r.makeAhead}</p>
+                    </>
+                  ) : ingredientsOnly.includes(r.id) ? (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Method and make-ahead timings are in the full plan.
+                    </p>
                   ) : (
                     <p className="mt-3 text-sm text-muted-foreground">
                       Ingredients, quantities and make-ahead timings are in the full plan.
@@ -79,6 +90,7 @@ function FoodPage() {
             schedule for every dish on the tea table.
           </LockedContinuation>
         ) : null}
+
 
         <section>
           <h2 className="text-xl">Allergy notes</h2>

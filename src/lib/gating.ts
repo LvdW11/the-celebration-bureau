@@ -14,6 +14,15 @@ export function useGate() {
     limit<T>(list: T[], n: number): T[] {
       return open ? list : list.slice(0, n);
     },
+    /**
+     * Like `limit`, but samples evenly across the list so the preview spans
+     * categories/weeks instead of only showing the first few entries.
+     */
+    spread<T>(list: T[], n: number): T[] {
+      if (open || list.length <= n) return open ? list : list.slice(0, n);
+      const step = list.length / n;
+      return Array.from({ length: n }, (_, i) => list[Math.floor(i * step)]!);
+    },
     hidden<T>(list: T[], n: number): number {
       return open ? 0 : Math.max(0, list.length - n);
     },
