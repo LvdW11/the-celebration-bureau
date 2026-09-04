@@ -33,13 +33,20 @@ function TimelineDetail() {
   const { momentId } = Route.useParams();
   const gate = useGate();
   const { details } = useParty();
-  const { todos } = usePlan();
+  const { todos, timeline, activities } = usePlan();
   const moment = timelineMomentById(details, momentId);
   if (!moment) throw notFound();
 
   const products = productsByIds(details, moment.productIds);
   const activity = moment.activityId ? allActivities.find((a) => a.id === moment.activityId) : undefined;
   const relatedTodos = todos.filter((t) => moment.todoIds.includes(t.id));
+
+  // Breadth is paid: only the first three moments of the afternoon are part of
+  // the free preview. The rest keep their headline and nothing else.
+  const momentIndex = timeline.findIndex((m) => m.id === moment.id);
+  const gated = gate.locked && momentIndex > 2;
+  // Only the one free activity may be linked while the plan is locked.
+  const activityOpen = activity ? gate.unlocked || activities[0]?.id === activity.id : false;
 
   // Locked: show the shape of the moment (first step, first prep items) but
   // not the complete workflow.
@@ -49,6 +56,22 @@ function TimelineDetail() {
   const hiddenPrep = gate.hidden(moment.prepare, 2);
   const shownProducts = gate.limit(products, 2);
   const hiddenProducts = gate.hidden(products, 2);
+
+  if (gated) {
+    return (
+      <AppShell
+        eyebrow={`${moment.time} – ${moment.endTime} · ${moment.lengthMin} minutes`}
+        title={moment.title}
+        intro={moment.detail}
+      >
+        <LockedContinuation title="Open this moment">
+          Unlock the full plan for the minute-by-minute run of {moment.title.toLowerCase()}, the
+          preparation beforehand and everything you'll need for {details.guests} children.
+        </LockedContinuation>
+      </AppShell>
+    );
+  }
+
 
   return (
     <AppShell
@@ -78,18 +101,25 @@ function TimelineDetail() {
           ) : null}
 
           {activity ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              This moment uses{" "}
-              <Link
-                to="/activities/$activityId"
-                params={{ activityId: activity.id }}
-                className="text-gold underline-offset-4 hover:underline"
-              >
-                {activity.name}
-              </Link>{" "}
-              — full activity instructions are on its page.
-            </p>
+            activityOpen ? (
+              <p className="mt-6 text-sm text-muted-foreground">
+                This moment uses{" "}
+                <Link
+                  to="/activities/$activityId"
+                  params={{ activityId: activity.id }}
+                  className="text-gold underline-offset-4 hover:underline"
+                >
+                  {activity.name}
+                </Link>{" "}
+                — full activity instructions are on its page.
+              </p>
+            ) : (
+              <p className="mt-6 text-sm text-muted-foreground">
+                This moment uses {activity.name} — its full instructions are part of the complete plan.
+              </p>
+            )
           ) : null}
+
         </section>
 
         <section>
