@@ -29,8 +29,8 @@ function Dashboard() {
   const hiddenMoments = gate.hidden(timeline, 3);
   // The dashboard is an overview: it always shows a taste, and only says what
   // is missing while the plan is locked.
-  const shownActivities = activities.slice(0, 1);
-  const hiddenActivities = gate.hidden(activities, 1);
+  const shownActivities = gate.unlocked ? activities : activities.slice(0, 2);
+  const hiddenActivities = gate.hidden(activities, 2);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
   const hiddenProducts = gate.hidden(budget.items, 3);
   const hiddenRecipes = gate.hidden(menu, 1);
@@ -52,6 +52,7 @@ function Dashboard() {
     <AppShell
       eyebrow="Your party"
       title={`${details.childName} is turning ${details.age}`}
+      hideBack
       intro={`${details.theme} · ${details.guests} children · ${details.venue.toLowerCase()} · $${details.budget} budget`}
       action={
         <span className="block text-right">
@@ -122,7 +123,7 @@ function Dashboard() {
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="text-2xl">Activities</h2>
           <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
-            See all {activities.length}
+            {gate.locked ? "More activity ideas" : `See all ${activities.length}`}
           </Link>
         </div>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -132,7 +133,8 @@ function Dashboard() {
         </div>
         {hiddenActivities > 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            {hiddenActivities} more activities with full instructions are in your full plan.
+            {hiddenActivities} more activities, with complete instructions, materials and shopping, are in
+            your full plan.
           </p>
         ) : null}
       </section>

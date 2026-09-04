@@ -20,25 +20,27 @@ export const Route = createFileRoute("/activities/")({
 function ActivitiesPage() {
   const { details, activities } = usePlan();
   const gate = useGate();
+  // While locked, only the two example activities from the preview are shown —
+  // the rest continue in the full plan.
+  const shown = gate.limit(activities, 2);
+  const hidden = gate.hidden(activities, 2);
 
   return (
     <AppShell
       eyebrow="Activities"
-      title={`${activities.length} moments, well paced`}
+      title={gate.locked ? "Two of your activities" : `${activities.length} moments, well paced`}
       intro={`Chosen for age ${details.age} and a ${details.diy.toLowerCase()}-DIY afternoon ${details.venue.toLowerCase() === "home" ? "at home" : `in the ${details.venue.toLowerCase()}`}. No competition, no crying at the end.`}
     >
-      {/* Every activity is visible at summary depth — the paid depth is the
-          step-by-step instructions on each detail page. */}
       <div className="grid gap-5 md:grid-cols-2">
-        {activities.map((a) => (
+        {shown.map((a) => (
           <ActivityCard key={a.id} activity={a} />
         ))}
       </div>
 
       {gate.locked ? (
-        <LockedContinuation title="Step-by-step instructions for all of them" className="mt-8">
-          Each activity opens into full preparation, what to say while you run it, exact materials for{" "}
-          {details.guests} children, cleanup notes and the products to buy.
+        <LockedContinuation title="More activity ideas" className="mt-8">
+          Unlock the remaining {hidden} {hidden === 1 ? "activity" : "activities"}, including complete
+          instructions, exact materials for {details.guests} children and the shopping behind them.
         </LockedContinuation>
       ) : null}
     </AppShell>

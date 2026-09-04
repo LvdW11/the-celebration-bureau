@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProductGrid } from "@/components/ProductCard";
 import { LockedContinuation } from "@/components/PartyBits";
@@ -36,8 +37,12 @@ function ActivityDetail() {
   const gate = useGate();
   const { details } = useParty();
   const { activities, selected, timeline } = usePlan();
-  const activity = activities.find((a) => a.id === activityId);
+  const index = activities.findIndex((a) => a.id === activityId);
+  const activity = activities[index];
   if (!activity) throw notFound();
+  // Free preview covers the two example activities only; the others stay
+  // behind the same unlock as the rest of the plan.
+  const previewOnly = gate.locked && index > 1;
 
   // The plan may have simplified this activity to fit the budget, so the
   // detail page shows the version that is actually planned.
@@ -54,6 +59,29 @@ function ActivityDetail() {
   const shownMaterials = gate.limit(materials, 2);
   const hiddenMaterials = gate.hidden(materials, 2);
 
+
+  if (previewOnly) {
+    return (
+      <AppShell
+        eyebrow={`Activity · ${activity.duration} · ${activity.effort}`}
+        title={activity.name}
+        intro={activity.summary}
+      >
+        <section className="surface p-6 md:p-8">
+          <p className="eyebrow">What the children make</p>
+          <p className="mt-3 text-[0.95rem] leading-relaxed">{activity.making}</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            This one is part of your full plan. Your free preview covers the first two activities in
+            detail.
+          </p>
+        </section>
+        <LockedContinuation title="Open this activity" className="mt-8">
+          Unlock the full plan for the preparation, how to run it with {details.guests} children,
+          materials with quantities, cleanup and the products to buy.
+        </LockedContinuation>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell
@@ -98,9 +126,10 @@ function ActivityDetail() {
             ))}
           </ol>
           {hiddenPrep > 0 ? (
-            <LockedContinuation compact title={`${hiddenPrep} more preparation steps`} className="mt-5">
-              everything to make ready before the children arrive
-            </LockedContinuation>
+            <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+              <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
+              {hiddenPrep} more preparation steps in your full plan
+            </p>
           ) : null}
         </section>
 
@@ -112,9 +141,10 @@ function ActivityDetail() {
                 {activity.during.length} steps guide you through running this with {details.guests} children,
                 followed by cleanup notes.
               </p>
-              <LockedContinuation compact title="How to run it, and clean up after" className="mt-5">
-                the full sequence and cleanup
-              </LockedContinuation>
+              <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+                <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
+                The full sequence and cleanup notes are in your full plan
+              </p>
             </>
           ) : (
             <>
@@ -147,9 +177,10 @@ function ActivityDetail() {
           ))}
         </ul>
         {hiddenMaterials > 0 ? (
-          <LockedContinuation compact title={`${hiddenMaterials} more materials, with quantities`} className="mt-5">
-            scaled for {details.guests} children
-          </LockedContinuation>
+          <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
+            {hiddenMaterials} more materials, scaled for {details.guests} children
+          </p>
         ) : null}
       </section>
 
@@ -159,6 +190,14 @@ function ActivityDetail() {
           <p className="mt-2 text-sm text-muted-foreground">Tap a product to open it at the retailer.</p>
           <ProductGrid products={products} className="mt-5" />
         </section>
+      ) : null}
+
+      {gate.locked ? (
+        <LockedContinuation title="Run this activity from start to finish" className="mt-12">
+          Unlock the full plan for every preparation step, what to say while you run it, all materials
+          with quantities for {details.guests} children and cleanup — plus the other {activities.length - 2}{" "}
+          activities.
+        </LockedContinuation>
       ) : null}
     </AppShell>
   );

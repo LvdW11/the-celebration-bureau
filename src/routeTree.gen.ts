@@ -20,6 +20,7 @@ import { Route as ShoppingListRouteImport } from './routes/shopping-list'
 import { Route as TodoRouteImport } from './routes/todo'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities.index'
 import { Route as ActivitiesActivityIdRouteImport } from './routes/activities.$activityId'
+import { Route as RecipesRecipeIdRouteImport } from './routes/recipes.$recipeId'
 import { Route as TimelineMomentIdRouteImport } from './routes/timeline.$momentId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,11 @@ const ActivitiesActivityIdRoute = ActivitiesActivityIdRouteImport.update({
   path: '/$activityId',
   getParentRoute: () => ActivitiesRoute,
 } as any)
+const RecipesRecipeIdRoute = RecipesRecipeIdRouteImport.update({
+  id: '/recipes/$recipeId',
+  path: '/recipes/$recipeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimelineMomentIdRoute = TimelineMomentIdRouteImport.update({
   id: '/timeline/$momentId',
   path: '/timeline/$momentId',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/timeline/$momentId': typeof TimelineMomentIdRoute
   '/activities/': typeof ActivitiesIndexRoute
 }
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/timeline/$momentId': typeof TimelineMomentIdRoute
   '/activities': typeof ActivitiesIndexRoute
 }
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/shopping-list': typeof ShoppingListRoute
   '/todo': typeof TodoRoute
   '/activities/$activityId': typeof ActivitiesActivityIdRoute
+  '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/timeline/$momentId': typeof TimelineMomentIdRoute
   '/activities/': typeof ActivitiesIndexRoute
 }
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/shopping-list'
     | '/todo'
     | '/activities/$activityId'
+    | '/recipes/$recipeId'
     | '/timeline/$momentId'
     | '/activities/'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/shopping-list'
     | '/todo'
     | '/activities/$activityId'
+    | '/recipes/$recipeId'
     | '/timeline/$momentId'
     | '/activities'
   id:
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/shopping-list'
     | '/todo'
     | '/activities/$activityId'
+    | '/recipes/$recipeId'
     | '/timeline/$momentId'
     | '/activities/'
   fileRoutesById: FileRoutesById
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   PreviewRoute: typeof PreviewRoute
   ShoppingListRoute: typeof ShoppingListRoute
   TodoRoute: typeof TodoRoute
+  RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   TimelineMomentIdRoute: typeof TimelineMomentIdRoute
 }
 
@@ -261,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ActivitiesActivityIdRouteImport
       parentRoute: typeof ActivitiesRoute
     }
+    '/recipes/$recipeId': {
+      id: '/recipes/$recipeId'
+      path: '/recipes/$recipeId'
+      fullPath: '/recipes/$recipeId'
+      preLoaderRoute: typeof RecipesRecipeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/timeline/$momentId': {
       id: '/timeline/$momentId'
       path: '/timeline/$momentId'
@@ -295,6 +315,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreviewRoute: PreviewRoute,
   ShoppingListRoute: ShoppingListRoute,
   TodoRoute: TodoRoute,
+  RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   TimelineMomentIdRoute: TimelineMomentIdRoute,
 }
 export const routeTree = rootRouteImport
