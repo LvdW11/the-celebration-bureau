@@ -172,7 +172,7 @@ function Builder() {
                       mode="single"
                       captionLayout="dropdown"
                       selected={parseDate(details.date)}
-                      defaultMonth={parseDate(details.date)}
+                      {...(parseDate(details.date) ? { defaultMonth: parseDate(details.date)! } : {})}
                       onSelect={(d) => d && setDetails({ date: format(d, DATE_FORMAT) })}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
