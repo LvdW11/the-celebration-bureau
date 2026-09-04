@@ -18,6 +18,8 @@ import {
 /* ------------------------------------------------------------------ */
 
 export interface PlanItem extends PricedProduct {
+  /** The catalogue slot this fills — differs from `id` after a substitution. */
+  sourceId: string;
   /** Optional items are the first thing budget pressure removes. */
   optional: boolean;
   /** Which activity pulled this item in, if any. */
@@ -37,6 +39,8 @@ export type DecisionKind =
   | "drop-optional"
   | "diy-swap"
   | "drop-product"
+  | "substitute"
+  | "upgrade"
   | "simplify-activity"
   | "drop-activity";
 
@@ -162,7 +166,7 @@ function itemsFor(details: PartyDetails, state: State): PlanItem[] {
     .map(([id, meta]) => {
       const product = productById(resolve(state, id))!;
       const priced = priceFor(product, details.guests, state.diy.includes(id));
-      return { ...priced, optional: meta.optional, activityId: meta.activityId };
+      return { ...priced, sourceId: id, optional: meta.optional, activityId: meta.activityId };
     })
     .filter((i) => Boolean(i.id))
     .sort((a, b) => a.category.localeCompare(b.category) || a.id.localeCompare(b.id));
@@ -192,7 +196,7 @@ function diyAppetite(diy: string) {
 function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Move[] {
   const moves: Move[] = [];
   const acts = selected(details, state);
-  const byId = new Map(items.map((i) => [i.id, i]));
+  const byId = new Map(items.map((i) => [i.sourceId, i]));
 
   // 1. Drop an optional component of an activity — simplify, never delete.
   for (const a of acts) {
@@ -248,15 +252,38 @@ function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Mov
     const product = productById(item.id);
     if (!product || product.priority === "essential" || item.activityId) continue;
     moves.push({
-      id: `drop-core:${item.id}`,
+      id: `drop-core:${item.sourceId}`,
       saving: item.lineTotal,
       valueCost: product.partyValue * (product.priority === "recommended" ? 1.6 : 1),
-      apply: (s) => ({ ...s, droppedCore: [...s.droppedCore, item.id] }),
+      apply: (s) => ({ ...s, droppedCore: [...s.droppedCore, item.sourceId] }),
       decision: {
         kind: "drop-product",
         label: `Left out ${product.name}`,
         reason: "Styling detail with the lowest contribution to the day.",
         saving: item.lineTotal,
+      },
+    });
+  }
+
+  // 3b. Buy the plainer version of something the party genuinely needs.
+  for (const item of items) {
+    const slot = productById(item.sourceId);
+    if (!slot?.alternativeId || state.subs[item.sourceId]) continue;
+    const alt = productById(slot.alternativeId);
+    if (!alt) continue;
+    const cheaper = priceFor(alt, details.guests, state.diy.includes(item.sourceId) && Boolean(alt.diy)).lineTotal;
+    const saving = round(item.lineTotal - cheaper);
+    if (saving <= 0) continue;
+    moves.push({
+      id: `swap:${item.sourceId}`,
+      saving,
+      valueCost: Math.max(0.4, slot.partyValue - alt.partyValue),
+      apply: (s) => ({ ...s, subs: { ...s.subs, [item.sourceId]: alt.id } }),
+      decision: {
+        kind: "substitute",
+        label: `${alt.name} instead of ${slot.name}`,
+        reason: "A plainer version of something the party needs either way.",
+        saving,
       },
     });
   }
