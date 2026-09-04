@@ -93,11 +93,52 @@ function Dashboard() {
           ))}
         </ol>
         {hiddenMoments > 0 ? (
-          <LockedContinuation title={`${hiddenMoments} more moments, through cake and farewell favors`} className="mt-6">
-            The complete running order with timings, instructions and what to prepare for each moment.
+          <LockedContinuation
+            compact
+            title={`${hiddenMoments} more moments, through cake and farewell favors`}
+            className="mt-6"
+          >
+            the complete running order with instructions and prep
           </LockedContinuation>
         ) : null}
       </section>
+
+      <section className="mt-12">
+        <PaletteProducts />
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl">Activities</h2>
+          <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
+            See all {activities.length}
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
+          {shownActivities.map((a) => (
+            <ActivityCard key={a.id} activity={a} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl">From your shopping list</h2>
+          <Link to="/shopping-list" className="text-sm text-gold underline-offset-4 hover:underline">
+            {budget.items.length} items · {money(budget.total)}
+          </Link>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Researched, quantified for {details.guests} children and kept inside your ${details.budget} budget.
+        </p>
+        <ProductStrip products={shownProducts} className="mt-5" />
+        {hiddenProducts > 0 ? (
+          <LockedContinuation compact title={`${hiddenProducts} more items costed for you`} className="mt-5">
+            with exact quantities, retailers and links
+          </LockedContinuation>
+        ) : null}
+      </section>
+
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
         {links.map((l) => (
