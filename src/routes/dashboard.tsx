@@ -28,11 +28,13 @@ function Dashboard() {
   const shownTimeline = gate.limit(timeline, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
   // The dashboard is an overview: it always shows a taste, and only says what
-  // is missing while the plan is locked.
-  const shownActivities = gate.unlocked ? activities : activities.slice(0, 2);
-  const hiddenActivities = gate.hidden(activities, 2);
+  // is missing while the plan is locked. Depth is free, breadth is paid — one
+  // activity and one recipe are complete, the rest continue in the full plan.
+  const shownActivities = gate.limit(activities, 1);
+  const hiddenActivities = gate.hidden(activities, 1);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
   const hiddenProducts = gate.hidden(budget.items, 3);
+  const previewMenu = menu.slice(0, 4);
   const hiddenRecipes = gate.hidden(menu, 1);
 
 
@@ -45,7 +47,7 @@ function Dashboard() {
       detail: `${budget.items.length} items · ${money(budget.total)}`,
     },
     { to: "/activities", label: "Activities", detail: `${activities.length} planned for age ${details.age}` },
-    { to: "/food", label: "Food", detail: "Tea table menu & recipes" },
+    { to: "/food", label: "Food", detail: "Your party menu & recipes" },
   ] as const;
 
   return (
