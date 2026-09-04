@@ -159,8 +159,8 @@ function Builder() {
             <Field label={`Budget — $${details.budget}`}>
               <input
                 type="range"
-                min={150}
-                max={300}
+                min={50}
+                max={500}
                 step={10}
                 value={details.budget}
                 onChange={(e) => setDetails({ budget: Number(e.target.value) })}
