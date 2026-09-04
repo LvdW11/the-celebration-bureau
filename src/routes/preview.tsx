@@ -122,49 +122,85 @@ function Preview() {
           ) : null}
         </section>
 
-        {firstActivity ? (
+        {previewActivities.length > 0 ? (
           <section className="mt-12">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="text-2xl">One of your activities</h2>
+              <h2 className="text-2xl">Two of your activities</h2>
               <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
-                See all {activities.length}
+                {gate.locked ? "More activity ideas" : `See all ${activities.length}`}
               </Link>
             </div>
-            <div className="mt-5">
-              <ActivityCard activity={firstActivity} />
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
+              {previewActivities.map((a) => (
+                <ActivityCard key={a.id} activity={a} />
+              ))}
             </div>
+            {gate.locked && activities.length > 2 ? (
+              <LockedContinuation title="More activity ideas" className="mt-6" compact>
+                unlock the remaining {activities.length - 2} activities, with complete instructions,
+                materials and shopping
+              </LockedContinuation>
+            ) : null}
           </section>
         ) : null}
 
         <section className="mt-12">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-2xl">We did the shopping research</h2>
+            <h2 className="text-2xl">We did the shopping research for you</h2>
             <Link to="/shopping-list" className="text-sm text-gold underline-offset-4 hover:underline">
               {budget.items.length} items · {money(budget.total)}
             </Link>
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Quantities calculated for {details.guests} children, {money(budget.remaining)} still free in your
-            budget.
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            We've already compared the party supplies and calculated exactly what you need for{" "}
+            {details.guests} children, so you don't have to spend hours searching through different
+            websites. {money(budget.remaining)} remains in your budget.
           </p>
           <ProductStrip products={shownProducts} className="mt-5" />
         </section>
 
         <section className="mt-12">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-2xl">The tea table</h2>
+            <h2 className="text-2xl">Your party menu</h2>
             <Link to="/food" className="text-sm text-gold underline-offset-4 hover:underline">
-              See the menu
+              {gate.locked ? "Menu preview" : "See the menu"}
             </Link>
           </div>
           <ul className="surface mt-5 divide-y divide-border/70 overflow-hidden">
-            {menu.slice(0, 4).map((r) => (
-              <li key={r.id} className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7">
-                <span className="text-[0.95rem]">{r.name}</span>
-                <span className="eyebrow shrink-0">{r.yield(details)}</span>
-              </li>
-            ))}
+            {previewMenu.map((r, i) => {
+              const open = gate.unlocked || i === 0;
+              if (open) {
+                return (
+                  <li key={r.id}>
+                    <Link
+                      to="/recipes/$recipeId"
+                      params={{ recipeId: r.id }}
+                      className="flex items-baseline justify-between gap-4 px-5 py-4 transition-colors hover:bg-secondary/40 md:px-7"
+                    >
+                      <span className="text-[0.95rem]">{r.name}</span>
+                      <span className="eyebrow shrink-0">{r.yield(details)}</span>
+                      <span className="text-gold">→</span>
+                    </Link>
+                  </li>
+                );
+              }
+              return (
+                <li
+                  key={r.id}
+                  className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7"
+                  aria-hidden
+                >
+                  <span className="select-none text-[0.95rem] blur-[3px]">{r.name}</span>
+                  <Lock className="size-3.5 shrink-0 self-center text-gold" strokeWidth={1.5} />
+                </li>
+              );
+            })}
           </ul>
+          {gate.locked ? (
+            <LockedContinuation title="The rest of your menu" className="mt-6" compact>
+              {menu.length - 1} more recipes with scaled ingredients, method and make-ahead timings
+            </LockedContinuation>
+          ) : null}
         </section>
 
         <section className="mt-14 rounded-3xl border border-border bg-secondary/50 p-6 md:p-10">
