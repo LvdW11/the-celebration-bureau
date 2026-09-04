@@ -57,36 +57,45 @@ function ShoppingPage() {
       <div className="space-y-8">
         {categories.map((cat) => (
           <section key={cat.category}>
-            <h2 className="text-xl">{cat.category}</h2>
-            <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">
-              {cat.items.map((i) => (
-                <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-7">
-                  <span className="min-w-0">
-                    <span className="block text-[0.95rem]">{i.name}</span>
-                    <span className="mt-0.5 block text-sm text-muted-foreground">
-                      {i.needLabel}
-                      {i.affiliateUrl ? (
-                        <>
-                          {" · "}
-                          <a
-                            href={i.affiliateUrl}
-                            target="_blank"
-                            rel="noopener noreferrer sponsored"
-                            className="text-gold underline-offset-4 hover:underline"
-                          >
-                            Shop
-                          </a>
-                        </>
-                      ) : null}
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-xl">{cat.category}</h2>
+              <span className="text-sm text-muted-foreground">{money(cat.total)} in this category</span>
+            </div>
+            {gate.locked ? (
+              // Locked view leads with real product cards: image, need, price, retailer.
+              <ProductGrid products={cat.items} className="mt-4" />
+            ) : (
+              <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">
+                {cat.items.map((i) => (
+                  <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-7">
+                    <span className="min-w-0">
+                      <span className="block text-[0.95rem]">{i.name}</span>
+                      <span className="mt-0.5 block text-sm text-muted-foreground">
+                        {i.needLabel}
+                        {i.affiliateUrl ? (
+                          <>
+                            {" · "}
+                            <a
+                              href={i.affiliateUrl}
+                              target="_blank"
+                              rel="noopener noreferrer sponsored"
+                              className="text-gold underline-offset-4 hover:underline"
+                            >
+                              Shop
+                            </a>
+                          </>
+                        ) : null}
+                      </span>
                     </span>
-                  </span>
-                  <span className="shrink-0 text-sm text-muted-foreground">{money(i.lineTotal)}</span>
-                </li>
-              ))}
-            </ul>
+                    <span className="shrink-0 text-sm text-muted-foreground">{money(i.lineTotal)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         ))}
       </div>
+
 
       {hiddenCount > 0 ? (
         <LockedContinuation title={`${hiddenCount} more items in the full shopping list`} className="mt-10">
