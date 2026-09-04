@@ -1,5 +1,4 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { Lock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProductGrid } from "@/components/ProductCard";
 import { LockedContinuation } from "@/components/PartyBits";
@@ -67,8 +66,7 @@ function ActivityDetail() {
           <p className="eyebrow">What the children make</p>
           <p className="mt-3 text-[0.95rem] leading-relaxed">{activity.making}</p>
           <p className="mt-4 text-sm text-muted-foreground">
-            This one is part of your full plan. Your free preview covers the first two activities in
-            detail.
+            This one is part of your full plan. Your free preview covers one activity in complete detail.
           </p>
         </section>
         <LockedContinuation title="Open this activity" className="mt-8">
