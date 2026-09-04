@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { ProgressBar } from "@/components/PartyBits";
+import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { useParty, usePlan } from "@/lib/party-store";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/todo")({
   head: () => ({
@@ -19,6 +20,9 @@ export const Route = createFileRoute("/todo")({
 function TodoPage() {
   const { details, todos } = usePlan();
   const { done, toggleTodo } = useParty();
+  const gate = useGate();
+  const shown = gate.limit(todos, 3);
+  const hiddenCount = gate.hidden(todos, 3);
 
   return (
     <AppShell
@@ -31,7 +35,7 @@ function TodoPage() {
       </div>
 
       <ul className="surface divide-y divide-border/70 overflow-hidden">
-        {todos.map((t) => {
+        {shown.map((t) => {
           const isDone = done.includes(t.id);
           return (
             <li key={t.id}>
@@ -85,6 +89,13 @@ function TodoPage() {
           );
         })}
       </ul>
+
+      {hiddenCount > 0 ? (
+        <LockedContinuation title={`${hiddenCount} more tasks in the full plan`} className="mt-8">
+          The complete four-week schedule — when to send invitations, order the cake, prep activities and
+          set the table — with every task linked to the products and moments it belongs to.
+        </LockedContinuation>
+      ) : null}
     </AppShell>
   );
 }

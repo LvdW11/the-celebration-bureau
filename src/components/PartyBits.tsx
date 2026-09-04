@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 import { useParty } from "@/lib/party-store";
 
 export function BackToParty({ className }: { className?: string }) {
@@ -41,6 +41,40 @@ export function LockedNote({ children }: { children: React.ReactNode }) {
       <Link
         to="/checkout"
         className="mt-4 inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-xs tracking-wide text-primary-foreground transition-opacity hover:opacity-90"
+      >
+        Unlock the full plan — $29
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * Renders *after* real preview content: says exactly what continues in the
+ * full plan, then offers the unlock. Never a bare paywall.
+ */
+export function LockedContinuation({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border border-dashed border-border bg-secondary/40 p-6 md:p-7 ${className ?? ""}`}
+    >
+      <div className="flex gap-3">
+        <Lock className="mt-0.5 size-4 shrink-0 text-gold" strokeWidth={1.5} />
+        <div>
+          <p className="text-[0.95rem]">{title}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{children}</p>
+        </div>
+      </div>
+      <Link
+        to="/checkout"
+        className="mt-5 inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-xs tracking-wide text-primary-foreground transition-opacity hover:opacity-90"
       >
         Unlock the full plan — $29
       </Link>

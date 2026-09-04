@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { LockedContinuation } from "@/components/PartyBits";
 import { usePlan } from "@/lib/party-store";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/activities/")({
   head: () => ({
@@ -16,6 +18,9 @@ export const Route = createFileRoute("/activities/")({
 
 function ActivitiesPage() {
   const { details, activities } = usePlan();
+  const gate = useGate();
+  const shown = gate.limit(activities, 2);
+  const hiddenCount = gate.hidden(activities, 2);
 
   return (
     <AppShell
@@ -24,7 +29,7 @@ function ActivitiesPage() {
       intro={`Chosen for age ${details.age} and a ${details.diy.toLowerCase()}-DIY afternoon ${details.venue.toLowerCase() === "home" ? "at home" : `in the ${details.venue.toLowerCase()}`}. No competition, no crying at the end.`}
     >
       <div className="grid gap-5 md:grid-cols-2">
-        {activities.map((a) => (
+        {shown.map((a) => (
           <Link
             key={a.id}
             to="/activities/$activityId"
@@ -49,6 +54,13 @@ function ActivitiesPage() {
           </Link>
         ))}
       </div>
+
+      {hiddenCount > 0 ? (
+        <LockedContinuation title={`${hiddenCount} more activities in the full plan`} className="mt-8">
+          Each with step-by-step preparation, what to say during the party, exact materials for
+          {" "}{details.guests} children, cleanup notes and the products to buy.
+        </LockedContinuation>
+      ) : null}
     </AppShell>
   );
 }

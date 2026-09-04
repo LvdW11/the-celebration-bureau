@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { ProductGrid } from "@/components/ProductCard";
+import { LockedContinuation } from "@/components/PartyBits";
 import { useParty, usePlan } from "@/lib/party-store";
 import { timelineMomentById, productsByIds, allActivities } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/timeline/$momentId")({
   head: () => ({
@@ -29,6 +31,7 @@ function TimelineNotFound() {
 
 function TimelineDetail() {
   const { momentId } = Route.useParams();
+  const gate = useGate();
   const { details } = useParty();
   const { todos } = usePlan();
   const moment = timelineMomentById(details, momentId);
@@ -44,6 +47,12 @@ function TimelineDetail() {
       title={moment.title}
       intro={moment.detail}
     >
+      {gate.locked ? (
+        <LockedContinuation title="Instructions and preparation are part of the complete plan">
+          What to do minute by minute, everything to prepare beforehand and the to-do tasks tied to this
+          moment.
+        </LockedContinuation>
+      ) : (
       <div className="grid gap-10 md:grid-cols-2">
         <section>
           <h2 className="text-2xl">On the day</h2>
@@ -99,6 +108,8 @@ function TimelineDetail() {
           ) : null}
         </section>
       </div>
+
+      )}
 
       {products.length > 0 ? (
         <section className="mt-12">

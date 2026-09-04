@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import previewCover from "@/assets/preview-cover.jpg";
+import { SectionHeader, SectionTabBar } from "@/components/SectionNav";
 import { usePlan } from "@/lib/party-store";
 
 export const Route = createFileRoute("/preview")({
@@ -28,17 +29,16 @@ const locked = [
 function Preview() {
   const { details, timeline } = usePlan();
   return (
-    <div className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-4xl items-center justify-between px-5 py-6 md:px-8">
-        <Link to="/" className="font-display text-lg tracking-tight">
-          The Celebration Bureau
-        </Link>
-        <Link to="/builder" className="text-sm text-muted-foreground hover:text-foreground">
-          Edit details
-        </Link>
-      </header>
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
+      <SectionHeader
+        right={
+          <Link to="/builder" className="hover:text-foreground">
+            Edit details
+          </Link>
+        }
+      />
 
-      <main className="mx-auto max-w-4xl px-5 pb-24 md:px-8">
+      <main className="mx-auto max-w-4xl px-5 py-10 pb-24 md:px-8 md:py-14">
         <p className="eyebrow">Free preview</p>
         <h1 className="mt-3 text-4xl md:text-5xl">
           {details.childName}'s {details.theme.toLowerCase()} party
@@ -90,7 +90,8 @@ function Preview() {
             ))}
           </ol>
           <p className="mt-4 text-sm text-muted-foreground">
-            More moments follow, through cake and farewell favors.
+            More moments follow, through cake and farewell favors. Use the navigation above to preview your
+          to-do list, shopping list, activities and food.
           </p>
         </section>
 
@@ -116,6 +117,8 @@ function Preview() {
           </Link>
         </section>
       </main>
+
+      <SectionTabBar />
     </div>
   );
 }

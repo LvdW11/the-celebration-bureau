@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useParty } from "@/lib/party-store";
 
 export const Route = createFileRoute("/checkout")({
@@ -14,7 +14,8 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function Checkout() {
-  const { details } = useParty();
+  const { details, unlock } = useParty();
+  const navigate = useNavigate();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-6 md:px-8">
@@ -54,12 +55,16 @@ function Checkout() {
               Payment is not connected yet. Continue to see the dashboard as it will appear after purchase.
             </p>
           </div>
-          <Link
-            to="/dashboard"
+          <button
+            type="button"
+            onClick={() => {
+              unlock();
+              navigate({ to: "/dashboard" });
+            }}
             className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-primary px-7 py-4 text-sm tracking-wide text-primary-foreground transition-opacity hover:opacity-90"
           >
             Continue to my party
-          </Link>
+          </button>
           <p className="mt-3 text-center text-xs text-muted-foreground">Placeholder — no charge will be made.</p>
         </div>
       </main>

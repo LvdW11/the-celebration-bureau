@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { LockedContinuation } from "@/components/PartyBits";
 import { usePlan } from "@/lib/party-store";
 import { money } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/shopping-list")({
   head: () => ({
@@ -17,12 +19,19 @@ export const Route = createFileRoute("/shopping-list")({
 
 function ShoppingPage() {
   const { details, budget } = usePlan();
+  const gate = useGate();
 
-  const categories = budget.byCategory.map((c) => ({
-    category: c.category,
-    total: c.total,
-    items: budget.items.filter((i) => i.category === c.category),
-  }));
+  // Totals always reflect the full plan; only the visible rows are limited.
+  const visibleItems = gate.limit(budget.items, 3);
+  const hiddenCount = gate.hidden(budget.items, 3);
+
+  const categories = budget.byCategory
+    .map((c) => ({
+      category: c.category,
+      total: c.total,
+      items: visibleItems.filter((i) => i.category === c.category),
+    }))
+    .filter((c) => c.items.length > 0);
 
   return (
     <AppShell
@@ -77,7 +86,14 @@ function ShoppingPage() {
         ))}
       </div>
 
-      {budget.skipped.length > 0 ? (
+      {hiddenCount > 0 ? (
+        <LockedContinuation title={`${hiddenCount} more items in the full shopping list`} className="mt-10">
+          Every remaining item with its calculated quantity, price, retailer and direct shopping link — all
+          fitted inside your ${details.budget} budget.
+        </LockedContinuation>
+      ) : null}
+
+      {gate.unlocked && budget.skipped.length > 0 ? (
         <section className="mt-10">
           <h2 className="text-xl">Left out to stay in budget</h2>
           <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">

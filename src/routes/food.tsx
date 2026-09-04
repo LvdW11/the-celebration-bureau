@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { LockedContinuation } from "@/components/PartyBits";
 import { useParty } from "@/lib/party-store";
 import { recipes, allergyNotes, timelineFor } from "@/lib/plan";
+import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/food")({
   head: () => ({
@@ -18,6 +20,9 @@ export const Route = createFileRoute("/food")({
 function FoodPage() {
   const { details } = useParty();
   const teaTime = timelineFor(details).find((m) => m.id === "tea")?.time;
+  const gate = useGate();
+  const detailed = gate.limit(recipes, 1).map((r) => r.id);
+  const hiddenCount = gate.hidden(recipes, 1);
 
   const courses = Array.from(new Set(recipes.map((r) => r.course))).map((course) => ({
     course,
@@ -41,6 +46,8 @@ function FoodPage() {
                     <p className="text-[0.95rem]">{r.name}</p>
                     <span className="eyebrow shrink-0">{r.yield(details)}</span>
                   </div>
+                  {detailed.includes(r.id) ? (
+                  <>
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {r.ingredients(details).map((i) => (
                       <li key={i} className="rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground">
@@ -54,11 +61,24 @@ function FoodPage() {
                     ))}
                   </ol>
                   <p className="mt-2 text-sm text-muted-foreground">{r.makeAhead}</p>
+                  </>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Ingredients, quantities and make-ahead timings are in the full plan.
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
           </section>
         ))}
+
+        {hiddenCount > 0 ? (
+          <LockedContinuation title={`Full recipes for ${hiddenCount} more dishes`}>
+            Scaled ingredient quantities for {details.guests} children, method steps and a make-ahead
+            schedule for every dish on the tea table.
+          </LockedContinuation>
+        ) : null}
 
         <section>
           <h2 className="text-xl">Allergy notes</h2>
