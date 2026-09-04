@@ -4,6 +4,7 @@ import previewCover from "@/assets/preview-cover.jpg";
 import { SectionHeader, SectionTabBar } from "@/components/SectionNav";
 import { PaletteProducts } from "@/components/PaletteProducts";
 import { ActivityCard } from "@/components/ActivityCard";
+import { LockedContinuation } from "@/components/PartyBits";
 import { ProductStrip } from "@/components/ProductCard";
 import { usePlan } from "@/lib/party-store";
 import { money } from "@/lib/plan";
@@ -31,7 +32,8 @@ function Preview() {
   const shownTimeline = timeline.slice(0, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
-  const firstActivity = activities[0];
+  const previewActivities = gate.unlocked ? activities : activities.slice(0, 2);
+  const previewMenu = menu.slice(0, 4);
 
   const locked = [
     {
