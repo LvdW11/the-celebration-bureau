@@ -82,29 +82,69 @@ function FoodPage() {
           </div>
         </section>
 
-        {courses.map((course) => (
-          <section key={course.course}>
-            <h2 className="text-xl">{course.course}</h2>
+        {gate.locked ? (
+          <section>
+            <h2 className="text-xl">Tea table</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your free preview opens the first dish in full. Tap it for ingredients, method and
+              make-ahead timings.
+            </p>
             <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">
-              {course.items.map((r) => (
-                <li key={r.id} className="px-5 py-5 md:px-7">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <p className="text-[0.95rem]">{r.name}</p>
-                    <span className="eyebrow shrink-0">{r.yield(details)}</span>
-                  </div>
+              {previewMenu.map((r, i) =>
+                i === 0 ? (
+                  <li key={r.id}>
+                    <Link
+                      to="/recipes/$recipeId"
+                      params={{ recipeId: r.id }}
+                      className="flex items-baseline justify-between gap-4 px-5 py-4 transition-colors hover:bg-secondary/40 md:px-7"
+                    >
+                      <span className="text-[0.95rem]">{r.name}</span>
+                      <span className="eyebrow shrink-0">{r.yield(details)}</span>
+                      <span className="text-gold">→</span>
+                    </Link>
+                  </li>
+                ) : (
+                  <li
+                    key={r.id}
+                    className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7"
+                    aria-hidden
+                  >
+                    <span className="select-none text-[0.95rem] blur-[3px]">{r.name}</span>
+                    <Lock className="size-3.5 shrink-0 self-center text-gold" strokeWidth={1.5} />
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+        ) : (
+          courses.map((course) => (
+            <section key={course.course}>
+              <h2 className="text-xl">{course.course}</h2>
+              <ul className="surface mt-4 divide-y divide-border/70 overflow-hidden">
+                {course.items.map((r) => (
+                  <li key={r.id} className="px-5 py-5 md:px-7">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: r.id }}
+                        className="text-[0.95rem] underline-offset-4 hover:underline"
+                      >
+                        {r.name}
+                      </Link>
+                      <span className="eyebrow shrink-0">{r.yield(details)}</span>
+                    </div>
 
-                  {notableEquipment(r.equipment).length > 0 ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Needs: {notableEquipment(r.equipment).map((e) => e.name).join(", ")} ·{" "}
-                      {r.prepMinutes} min
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Everyday kitchen kit only · {r.prepMinutes} min
-                    </p>
-                  )}
+                    {notableEquipment(r.equipment).length > 0 ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Needs: {notableEquipment(r.equipment).map((e) => e.name).join(", ")} ·{" "}
+                        {r.prepMinutes} min
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Everyday kitchen kit only · {r.prepMinutes} min
+                      </p>
+                    )}
 
-                  {ingredientsOnly.includes(r.id) ? (
                     <ul className="mt-3 flex flex-wrap gap-2">
                       {r.ingredients.map((i) => (
                         <li key={i} className="rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground">
@@ -112,41 +152,29 @@ function FoodPage() {
                         </li>
                       ))}
                     </ul>
-                  ) : null}
 
-                  {r.substitutions.length > 0 && ingredientsOnly.includes(r.id) ? (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Swapped for your party: {r.substitutions.join(" · ")}
-                    </p>
-                  ) : null}
-
-                  {full.includes(r.id) ? (
-                    <>
-                      <ol className="mt-3 space-y-1 text-sm text-muted-foreground">
-                        {r.method.map((m) => (
-                          <li key={m}>{m}</li>
-                        ))}
-                      </ol>
-                      <p className="mt-2 text-sm text-muted-foreground">{r.makeAhead}</p>
-                      <p className="mt-3 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
-                        <span className="eyebrow">Bureau tip</span>
-                        <span className="mt-1 block">{r.tip}</span>
+                    {r.substitutions.length > 0 ? (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Swapped for your party: {r.substitutions.join(" · ")}
                       </p>
-                    </>
-                  ) : ingredientsOnly.includes(r.id) ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Method, the Bureau tip and make-ahead timings are in the full plan.
+                    ) : null}
+
+                    <ol className="mt-3 space-y-1 text-sm text-muted-foreground">
+                      {r.method.map((m) => (
+                        <li key={m}>{m}</li>
+                      ))}
+                    </ol>
+                    <p className="mt-2 text-sm text-muted-foreground">{r.makeAhead}</p>
+                    <p className="mt-3 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+                      <span className="eyebrow">Bureau tip</span>
+                      <span className="mt-1 block">{r.tip}</span>
                     </p>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Ingredients, quantities and make-ahead timings are in the full plan.
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
 
         {hiddenCount > 0 ? (
           <LockedContinuation title={`Full recipes for ${hiddenCount} more dishes`}>
@@ -154,6 +182,7 @@ function FoodPage() {
             schedule for every dish on the tea table.
           </LockedContinuation>
         ) : null}
+
 
 
         <section>
