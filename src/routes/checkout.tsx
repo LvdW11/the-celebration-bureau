@@ -17,17 +17,16 @@ function Checkout() {
   const { details, unlock } = useParty();
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-6 md:px-8">
-        <Link to="/" className="font-display text-lg tracking-tight">
-          The Celebration Bureau
-        </Link>
-        <Link to="/preview" className="text-sm text-muted-foreground hover:text-foreground">
-          Back to preview
-        </Link>
-      </header>
+    <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-0">
+      <SectionHeader
+        right={
+          <Link to="/preview" className="hover:text-foreground">
+            Back to preview
+          </Link>
+        }
+      />
 
-      <main className="mx-auto w-full max-w-2xl px-5 pb-24 md:px-8">
+      <main className="mx-auto w-full max-w-2xl px-5 py-10 pb-24 md:px-8">
         <p className="eyebrow">Checkout</p>
         <h1 className="mt-3 text-4xl md:text-5xl">Unlock the full plan</h1>
 
