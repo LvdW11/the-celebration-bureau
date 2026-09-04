@@ -114,50 +114,29 @@ function ActivityDetail() {
         <section>
           <h2 className="text-2xl">Preparation</h2>
           <ol className="mt-4 space-y-3">
-            {shownPrep.map((step, i) => (
+            {activity.preparation.map((step, i) => (
               <li key={i} className="flex gap-4">
                 <span className="font-display text-lg text-gold">{i + 1}</span>
                 <p className="text-[0.95rem] leading-relaxed">{step}</p>
               </li>
             ))}
           </ol>
-          {hiddenPrep > 0 ? (
-            <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-              <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
-              {hiddenPrep} more preparation steps in your full plan
-            </p>
-          ) : null}
         </section>
 
         <section>
           <h2 className="text-2xl">During the party</h2>
-          {gate.locked ? (
-            <>
-              <p className="mt-4 text-[0.95rem] leading-relaxed text-muted-foreground">
-                {activity.during.length} steps guide you through running this with {details.guests} children,
-                followed by cleanup notes.
-              </p>
-              <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-                <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
-                The full sequence and cleanup notes are in your full plan
-              </p>
-            </>
-          ) : (
-            <>
-              <ol className="mt-4 space-y-3">
-                {activity.during.map((step, i) => (
-                  <li key={i} className="flex gap-4">
-                    <span className="font-display text-lg text-gold">{i + 1}</span>
-                    <p className="text-[0.95rem] leading-relaxed">{step}</p>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-6 rounded-2xl bg-secondary/50 p-5">
-                <p className="eyebrow">Cleanup</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activity.cleanup}</p>
-              </div>
-            </>
-          )}
+          <ol className="mt-4 space-y-3">
+            {activity.during.map((step, i) => (
+              <li key={i} className="flex gap-4">
+                <span className="font-display text-lg text-gold">{i + 1}</span>
+                <p className="text-[0.95rem] leading-relaxed">{step}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-6 rounded-2xl bg-secondary/50 p-5">
+            <p className="eyebrow">Cleanup</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activity.cleanup}</p>
+          </div>
         </section>
       </div>
 
@@ -165,19 +144,13 @@ function ActivityDetail() {
         <h2 className="text-2xl">Materials</h2>
         <p className="mt-2 text-sm text-muted-foreground">Exact quantities for {details.guests} guests.</p>
         <ul className="mt-4 space-y-3">
-          {shownMaterials.map((m, i) => (
+          {materials.map((m, i) => (
             <li key={i} className="flex gap-4">
               <span className="mt-2 size-1.5 shrink-0 rounded-full bg-blush" />
               <p className="text-[0.95rem] leading-relaxed">{m}</p>
             </li>
           ))}
         </ul>
-        {hiddenMaterials > 0 ? (
-          <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-            <Lock className="size-3.5 shrink-0 text-gold" strokeWidth={1.5} />
-            {hiddenMaterials} more materials, scaled for {details.guests} children
-          </p>
-        ) : null}
       </section>
 
       {products.length > 0 ? (
@@ -188,11 +161,11 @@ function ActivityDetail() {
         </section>
       ) : null}
 
-      {gate.locked ? (
-        <LockedContinuation title="Run this activity from start to finish" className="mt-12">
-          Unlock the full plan for every preparation step, what to say while you run it, all materials
-          with quantities for {details.guests} children and cleanup — plus the other {activities.length - 2}{" "}
-          activities.
+      {gate.locked && activities.length > 1 ? (
+        <LockedContinuation title="More activity ideas" className="mt-12">
+          This activity is yours in full. Unlock the plan to see the other {activities.length - 1}{" "}
+          activities, with the same complete instructions, materials for {details.guests} children and
+          shopping.
         </LockedContinuation>
       ) : null}
     </AppShell>
