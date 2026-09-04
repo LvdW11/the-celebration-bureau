@@ -25,11 +25,11 @@ function FoodPage() {
   const { menu } = usePlan();
   const teaTime = timelineFor(details).find((m) => m.id === "tea")?.time;
   const gate = useGate();
-  // One dish is fully written out as the free example. The rest keep names
-  // and yields until the plan is unlocked.
-  const full = gate.limit(menu, 1).map((r) => r.id);
-  const ingredientsOnly = full;
+  // Depth is free, breadth is paid: while locked the menu shows four dishes and
+  // only the first one opens in full.
+  const previewMenu = menu.slice(0, 4);
   const hiddenCount = gate.hidden(menu, 1);
+
 
   const courses = Array.from(new Set(menu.map((r) => r.course))).map((course) => ({
     course,
