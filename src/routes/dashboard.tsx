@@ -52,10 +52,16 @@ function Dashboard() {
       title={`${details.childName} is turning ${details.age}`}
       intro={`${details.theme} · ${details.guests} children · ${details.venue.toLowerCase()} · $${details.budget} budget`}
       action={
-        <Link to="/builder" className="text-sm text-gold underline-offset-4 hover:underline">
-          Edit party details
-        </Link>
+        <span className="block text-right">
+          <Link to="/builder" className="text-sm text-gold underline-offset-4 hover:underline">
+            Edit party details
+          </Link>
+          <span className="mt-1 block text-xs text-muted-foreground">
+            Change these anytime. Your plan will adjust.
+          </span>
+        </span>
       }
+
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="surface p-6">
