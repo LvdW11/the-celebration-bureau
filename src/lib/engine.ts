@@ -83,13 +83,28 @@ interface State {
   diy: string[];
   droppedCore: string[];
   droppedActivities: string[];
+  /** productId -> cheaper stand-in the plan buys instead. */
+  subs: Record<string, string>;
 }
+
+const emptyState = (chosen: Chosen[]): State => ({
+  chosen,
+  diy: [],
+  droppedCore: [],
+  droppedActivities: [],
+  subs: {},
+});
+
+/** The product this plan actually buys for a catalogue id. */
+const resolve = (state: State, id: string) => state.subs[id] ?? id;
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
 const coreProducts = (details: PartyDetails): Product[] =>
   products
-    .filter((p) => p.themes.includes(details.theme) && p.activityIds.length === 0)
+    .filter(
+      (p) => p.themes.includes(details.theme) && p.activityIds.length === 0 && !p.alternativeOnly,
+    )
     .sort((a, b) => a.id.localeCompare(b.id));
 
 function tierOf(activity: Activity, tierId: ActivityTier["id"]): ActivityTier {
@@ -104,11 +119,11 @@ function selected(details: PartyDetails, state: State): SelectedActivity[] {
       const optionalIds = tier.optionalProductIds.filter((id) => !c.droppedOptional.includes(id));
       const ids = [...tier.requiredProductIds, ...optionalIds];
       const cost = ids.reduce((s, id) => {
-        const p = productById(id);
+        const p = productById(resolve(state, id));
         return p ? s + priceFor(p, details.guests, state.diy.includes(id)).lineTotal : s;
       }, 0);
       const diyPrep = ids.reduce((s, id) => {
-        const p = productById(id);
+        const p = productById(resolve(state, id));
         return p && state.diy.includes(id) && p.diy ? s + p.diy.prepMinutes : s;
       }, 0);
       return {
@@ -145,7 +160,7 @@ function itemsFor(details: PartyDetails, state: State): PlanItem[] {
 
   return Array.from(map.entries())
     .map(([id, meta]) => {
-      const product = productById(id)!;
+      const product = productById(resolve(state, id))!;
       const priced = priceFor(product, details.guests, state.diy.includes(id));
       return { ...priced, optional: meta.optional, activityId: meta.activityId };
     })
@@ -210,15 +225,15 @@ function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Mov
   // 2. Make it yourself instead of buying it.
   for (const item of items) {
     const product = productById(item.id);
-    if (!product?.diy || state.diy.includes(item.id)) continue;
+    if (!product?.diy || state.diy.includes(item.sourceId)) continue;
     const homemade = priceFor(product, details.guests, true).lineTotal;
     const saving = round(item.lineTotal - homemade);
     if (saving <= 0) continue;
     moves.push({
-      id: `diy:${item.id}`,
+      id: `diy:${item.sourceId}`,
       saving,
       valueCost: diyAppetite(details.diy) + product.diy.prepMinutes / 90,
-      apply: (s) => ({ ...s, diy: [...s.diy, item.id] }),
+      apply: (s) => ({ ...s, diy: [...s.diy, item.sourceId] }),
       decision: {
         kind: "diy-swap",
         label: `${product.diy.name}`,
@@ -253,7 +268,7 @@ function buildMoves(details: PartyDetails, state: State, items: PlanItem[]): Mov
     if (!simple) continue;
     const cost = (ids: string[]) =>
       ids.reduce((s, id) => {
-        const p = productById(id);
+        const p = productById(resolve(state, id));
         return p ? s + priceFor(p, details.guests, state.diy.includes(id)).lineTotal : s;
       }, 0);
     const saving = round(cost(a.tier.requiredProductIds) - cost(simple.requiredProductIds));
