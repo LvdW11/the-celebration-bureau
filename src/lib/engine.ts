@@ -361,16 +361,14 @@ export function buildPlan(details: PartyDetails): PartyPlan {
     spent += a.durationMin;
   }
 
-  let state: State = {
-    chosen: candidates.map((a) => ({
+  const baseChosen = (): Chosen[] =>
+    candidates.map((a) => ({
       activityId: a.id,
       tierId: preferredTier(a, details.diy).id,
       droppedOptional: [],
-    })),
-    diy: [],
-    droppedCore: [],
-    droppedActivities: [],
-  };
+    }));
+
+  let state: State = emptyState(baseChosen());
 
   // Step 2–5 — cost, trim, recost, until it fits.
   const decisions: PlanDecision[] = [];
@@ -404,16 +402,24 @@ export function buildPlan(details: PartyDetails): PartyPlan {
     items = itemsFor(details, state);
   }
 
-  const before = itemsFor(details, {
-    chosen: candidates.map((a) => ({
-      activityId: a.id,
-      tierId: preferredTier(a, details.diy).id,
-      droppedOptional: [],
-    })),
-    diy: [],
-    droppedCore: [],
-    droppedActivities: [],
-  });
+  // Step 6 — headroom. Only spend it where it genuinely improves the party.
+  let ups = 0;
+  while (ups < MAX_STEPS) {
+    ups += 1;
+    const headroom = round(details.budget - totalOf(items));
+    const upgrades = buildUpgrades(details, state, items).filter(
+      (u) => u.cost > 0 && u.cost <= headroom && u.gain / u.cost >= MIN_VALUE_PER_DOLLAR,
+    );
+    if (upgrades.length === 0) break;
+    const best = [...upgrades].sort(
+      (a, b) => b.gain / b.cost - a.gain / a.cost || a.id.localeCompare(b.id),
+    )[0]!;
+    state = best.apply(state);
+    decisions.push(best.decision);
+    items = itemsFor(details, state);
+  }
+
+  const before = itemsFor(details, emptyState(baseChosen()));
   const keptIds = new Set(items.map((i) => i.id));
   const dropped = before.filter((i) => !keptIds.has(i.id));
 
