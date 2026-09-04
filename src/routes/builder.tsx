@@ -1,4 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useParty } from "@/lib/party-store";
 import { dietaryOptions, type Allergen } from "@/lib/plan";
 
@@ -17,7 +29,28 @@ export const Route = createFileRoute("/builder")({
 const venues = ["Home", "Backyard", "Park"];
 const themes = ["Elegant Magical Princess"];
 const diyLevels = ["Low", "Medium", "High"];
-const startTimes = ["11:00", "12:00", "13:00", "14:00", "15:00"];
+const DATE_FORMAT = "EEEE, MMMM d, yyyy";
+
+/** Every quarter hour from 8:00 AM to 10:00 PM, stored as 24h for the engine. */
+const startTimes = Array.from({ length: (22 - 8) * 4 + 1 }, (_, i) => {
+  const minutes = 8 * 60 + i * 15;
+  const h24 = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return {
+    value: `${String(h24).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+    label: `${h12}:${String(m).padStart(2, "0")} ${h24 < 12 ? "AM" : "PM"}`,
+  };
+});
+
+function timeLabel(value: string) {
+  return startTimes.find((t) => t.value === value)?.label ?? value;
+}
+
+function parseDate(value: string): Date | undefined {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -119,19 +152,50 @@ function Builder() {
             </Field>
 
             <div className="grid gap-6 sm:grid-cols-2">
-              <Field label="Date">
-                <input
-                  className={inputClass}
-                  value={details.date}
-                  onChange={(e) => setDetails({ date: e.target.value })}
-                />
+              <Field label="Party date">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        inputClass,
+                        "flex items-center gap-3 text-left",
+                        !details.date && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="size-4 text-gold" strokeWidth={1.5} />
+                      {details.date || "Select a date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      captionLayout="dropdown"
+                      selected={parseDate(details.date)}
+                      defaultMonth={parseDate(details.date)}
+                      onSelect={(d) => d && setDetails({ date: format(d, DATE_FORMAT) })}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </Field>
               <Field label="Start time">
-                <Chips
-                  options={startTimes}
+                <Select
                   value={details.startTime}
-                  onChange={(v) => setDetails({ startTime: v })}
-                />
+                  onValueChange={(v) => setDetails({ startTime: v })}
+                >
+                  <SelectTrigger className={cn(inputClass, "h-auto")}>
+                    <SelectValue placeholder="Select a time">{timeLabel(details.startTime)}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {startTimes.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
             </div>
 
