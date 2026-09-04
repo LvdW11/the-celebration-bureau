@@ -101,18 +101,25 @@ function TimelineDetail() {
           ) : null}
 
           {activity ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              This moment uses{" "}
-              <Link
-                to="/activities/$activityId"
-                params={{ activityId: activity.id }}
-                className="text-gold underline-offset-4 hover:underline"
-              >
-                {activity.name}
-              </Link>{" "}
-              — full activity instructions are on its page.
-            </p>
+            activityOpen ? (
+              <p className="mt-6 text-sm text-muted-foreground">
+                This moment uses{" "}
+                <Link
+                  to="/activities/$activityId"
+                  params={{ activityId: activity.id }}
+                  className="text-gold underline-offset-4 hover:underline"
+                >
+                  {activity.name}
+                </Link>{" "}
+                — full activity instructions are on its page.
+              </p>
+            ) : (
+              <p className="mt-6 text-sm text-muted-foreground">
+                This moment uses {activity.name} — its full instructions are part of the complete plan.
+              </p>
+            )
           ) : null}
+
         </section>
 
         <section>
