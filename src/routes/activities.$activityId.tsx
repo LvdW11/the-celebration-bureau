@@ -3,7 +3,9 @@ import { AppShell } from "@/components/AppShell";
 import { ProductGrid } from "@/components/ProductCard";
 import { LockedContinuation } from "@/components/PartyBits";
 import { useParty, usePlan } from "@/lib/party-store";
-import { activityCost, money, productsByIds } from "@/lib/plan";
+import { money, productsByIds } from "@/lib/plan";
+import { activityCost } from "@/lib/engine";
+import { notableEquipment } from "@/lib/equipment";
 import { useGate } from "@/lib/gating";
 
 export const Route = createFileRoute("/activities/$activityId")({
@@ -33,12 +35,17 @@ function ActivityDetail() {
   const { activityId } = Route.useParams();
   const gate = useGate();
   const { details } = useParty();
-  const { activities, timeline } = usePlan();
+  const { activities, selected, timeline } = usePlan();
   const activity = activities.find((a) => a.id === activityId);
   if (!activity) throw notFound();
 
-  const products = productsByIds(details, activity.productIds);
-  const cost = activityCost(details, activity.productIds);
+  // The plan may have simplified this activity to fit the budget, so the
+  // detail page shows the version that is actually planned.
+  const chosen = selected.find((s) => s.activity.id === activityId);
+  const planned = chosen ? [...chosen.requiredIds, ...chosen.optionalIds] : activity.productIds;
+  const products = productsByIds(details, planned);
+  const cost = chosen ? chosen.cost : activityCost(details, planned);
+  const kit = notableEquipment(activity.equipment);
   const moment = timeline.find((m) => m.id === activity.timelineId);
 
   const materials = activity.materials(details.guests);
@@ -57,6 +64,17 @@ function ActivityDetail() {
       <section className="surface p-6 md:p-8">
         <p className="eyebrow">What the children make</p>
         <p className="mt-3 text-[0.95rem] leading-relaxed">{activity.making}</p>
+        {chosen ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Planned as: {chosen.tier.label} — {chosen.tier.note} About {chosen.prepMinutes} minutes of
+            preparation.
+          </p>
+        ) : null}
+        {kit.length > 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            You'll need: {kit.map((e) => e.name).join(", ")}.
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted-foreground">
           <span>Ages {activity.ageMin}–{activity.ageMax}</span>
           {moment ? (

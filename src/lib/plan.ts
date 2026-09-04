@@ -1,5 +1,26 @@
 import { products, productById, type Product, type Priority } from "./products";
 
+/* ------------------------------------------------------------------ */
+/* Party constraints — the single set of inputs the engine plans from  */
+/* ------------------------------------------------------------------ */
+
+export type DiyLevel = "Low" | "Medium" | "High";
+
+export type Allergen = "dairy" | "egg" | "gluten" | "nuts" | "peanuts" | "sesame" | "other";
+
+export const dietaryOptions: { key: Allergen; label: string }[] = [
+  { key: "dairy", label: "Dairy" },
+  { key: "egg", label: "Egg" },
+  { key: "gluten", label: "Gluten" },
+  { key: "nuts", label: "Nuts" },
+  { key: "peanuts", label: "Peanuts" },
+  { key: "sesame", label: "Sesame" },
+  { key: "other", label: "Other" },
+];
+
+export const dietaryLabel = (a: Allergen) =>
+  dietaryOptions.find((o) => o.key === a)?.label ?? a;
+
 export interface PartyDetails {
   childName: string;
   age: number;
@@ -11,6 +32,8 @@ export interface PartyDetails {
   date: string;
   startTime: string;
   durationHours: number;
+  /** Party-wide dietary constraints. Empty = none. */
+  dietary: Allergen[];
 }
 
 export const defaultParty: PartyDetails = {
@@ -24,6 +47,7 @@ export const defaultParty: PartyDetails = {
   date: "Saturday, October 11",
   startTime: "14:00",
   durationHours: 2.5,
+  dietary: [],
 };
 
 /* ------------------------------------------------------------------ */
@@ -36,25 +60,66 @@ export interface PricedProduct extends Product {
   lineTotal: number;
   /** Human-readable need, e.g. "10 crowns · 1 pack". */
   needLabel: string;
+  /** True when the planner chose the homemade version of this item. */
+  diyChosen?: boolean;
 }
 
-export function priceFor(product: Product, guests: number): PricedProduct {
-  const units = product.coversChildren ? Math.max(1, Math.ceil(guests / product.coversChildren)) : 1;
-  const lineTotal = Math.round(product.price * units * 100) / 100;
-  const needLabel = product.coversChildren
-    ? `${units} × ${product.unit}`
-    : product.unit;
-  return { ...product, units, lineTotal, needLabel };
+/**
+ * Quantity rules. Fixed and reusable items stay at one however many children
+ * come; consumables round up to whole packs and carry a small buffer so
+ * nothing runs out on the day.
+ */
+export function unitsFor(product: Product, guests: number): number {
+  if (product.nature !== "consumable" || !product.coversChildren) return 1;
+  const needed = guests + (product.buffer ?? 0);
+  return Math.max(1, Math.ceil(needed / product.coversChildren));
+}
+
+export function priceFor(product: Product, guests: number, diyChosen = false): PricedProduct {
+  const units = unitsFor(product, guests);
+  const unitPrice = diyChosen && product.diy ? product.diy.price : product.price;
+  const lineTotal = Math.round(unitPrice * units * 100) / 100;
+  const needLabel =
+    product.nature === "consumable" && product.coversChildren
+      ? `${units} × ${product.unit}`
+      : product.unit;
+  return {
+    ...product,
+    name: diyChosen && product.diy ? product.diy.name : product.name,
+    price: unitPrice,
+    units,
+    lineTotal,
+    needLabel,
+    diyChosen,
+  };
 }
 
 /* ------------------------------------------------------------------ */
-/* Activities — age aware                                              */
+/* Activities — age, venue, theme and DIY aware                        */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Each activity exists at more than one level of effort. The engine picks the
+ * tier that matches the parent's DIY preference, and may step it down when the
+ * budget is tight — simplifying an activity rather than deleting it.
+ */
+export interface ActivityTier {
+  id: "ready" | "simple";
+  label: string;
+  /** Without these the activity does not work. */
+  requiredProductIds: string[];
+  /** Nice to have — the first thing budget pressure removes. */
+  optionalProductIds: string[];
+  prepMinutes: number;
+  effort: string;
+  note: string;
+}
 
 export interface Activity {
   id: string;
   name: string;
   duration: string;
+  durationMin: number;
   effort: string;
   ageMin: number;
   ageMax: number;
@@ -68,13 +133,27 @@ export interface Activity {
   productIds: string[];
   timelineId: string;
   todoIds: string[];
+
+  /* ---- planning metadata ---- */
+  /** 0–10: how much of the party the children will remember. */
+  partyValue: number;
+  priority: Priority;
+  themes: string[];
+  /** Venues this works in. */
+  venues: string[];
+  setupMinutes: number;
+  equipment: string[];
+  tiers: ActivityTier[];
 }
+
+const THEME = "Elegant Magical Princess";
 
 export const allActivities: Activity[] = [
   {
     id: "crown-decorating",
     name: "Royal crown decorating",
     duration: "20 min",
+    durationMin: 20,
     effort: "Low prep",
     ageMin: 4,
     ageMax: 8,
@@ -105,11 +184,38 @@ export const allActivities: Activity[] = [
     productIds: ["gold-crowns", "craft-gems", "satin-ribbon"],
     timelineId: "arrival",
     todoIds: ["decor-kit", "printables"],
+    partyValue: 9,
+    priority: "essential",
+    themes: [THEME],
+    venues: ["Home", "Backyard", "Park"],
+    setupMinutes: 15,
+    equipment: ["scissors", "bowls"],
+    tiers: [
+      {
+        id: "ready",
+        label: "Ready-made crowns",
+        requiredProductIds: ["gold-crowns", "craft-gems"],
+        optionalProductIds: ["satin-ribbon"],
+        prepMinutes: 25,
+        effort: "Low prep",
+        note: "Crowns arrive finished — you only divide the gems and ribbon.",
+      },
+      {
+        id: "simple",
+        label: "Cut-at-home crowns",
+        requiredProductIds: ["craft-gems"],
+        optionalProductIds: ["satin-ribbon"],
+        prepMinutes: 70,
+        effort: "An evening of prep",
+        note: "Print the Bureau template onto gold card and cut the crowns yourself.",
+      },
+    ],
   },
   {
     id: "garden-hunt",
     name: "The Enchanted Garden hunt",
     duration: "25 min",
+    durationMin: 25,
     effort: "Low prep",
     ageMin: 4,
     ageMax: 8,
@@ -137,11 +243,38 @@ export const allActivities: Activity[] = [
     productIds: ["craft-gems"],
     timelineId: "hunt",
     todoIds: ["decor-kit", "printables"],
+    partyValue: 8,
+    priority: "recommended",
+    themes: [THEME],
+    venues: ["Backyard", "Park", "Home"],
+    setupMinutes: 20,
+    equipment: ["scissors"],
+    tiers: [
+      {
+        id: "ready",
+        label: "Printed clue cards & jewels",
+        requiredProductIds: ["craft-gems"],
+        optionalProductIds: [],
+        prepMinutes: 30,
+        effort: "Low prep",
+        note: "Hide the jewels and print the cards.",
+      },
+      {
+        id: "simple",
+        label: "Handwritten clues",
+        requiredProductIds: ["craft-gems"],
+        optionalProductIds: [],
+        prepMinutes: 40,
+        effort: "Low prep",
+        note: "Write the clues by hand on card — children love the handwriting.",
+      },
+    ],
   },
   {
     id: "portrait-corner",
     name: "Royal portrait corner",
     duration: "Open",
+    durationMin: 20,
     effort: "15 min setup",
     ageMin: 4,
     ageMax: 8,
@@ -168,11 +301,38 @@ export const allActivities: Activity[] = [
     productIds: ["chiffon-backdrop", "eucalyptus-stems", "balloon-garland"],
     timelineId: "portrait",
     todoIds: ["decor-kit"],
+    partyValue: 7,
+    priority: "recommended",
+    themes: [THEME],
+    venues: ["Home", "Backyard"],
+    setupMinutes: 30,
+    equipment: ["command-hooks", "balloon-pump"],
+    tiers: [
+      {
+        id: "ready",
+        label: "Full styled corner",
+        requiredProductIds: ["chiffon-backdrop"],
+        optionalProductIds: ["balloon-garland", "eucalyptus-stems"],
+        prepMinutes: 45,
+        effort: "15 min setup",
+        note: "Drape, garland and greenery — the strongest visual finish.",
+      },
+      {
+        id: "simple",
+        label: "Fabric drape corner",
+        requiredProductIds: [],
+        optionalProductIds: ["balloon-garland", "eucalyptus-stems"],
+        prepMinutes: 60,
+        effort: "30 min setup",
+        note: "Pin a plain blush sheet to the fence and dress it with what you have.",
+      },
+    ],
   },
   {
     id: "quiet-corner",
     name: "Quiet corner",
     duration: "Open",
+    durationMin: 15,
     effort: "No prep",
     ageMin: 4,
     ageMax: 6,
@@ -186,11 +346,29 @@ export const allActivities: Activity[] = [
     productIds: [],
     timelineId: "arrival",
     todoIds: [],
+    partyValue: 5,
+    priority: "optional",
+    themes: [THEME],
+    venues: ["Home", "Backyard", "Park"],
+    setupMinutes: 5,
+    equipment: [],
+    tiers: [
+      {
+        id: "ready",
+        label: "Blanket & books",
+        requiredProductIds: [],
+        optionalProductIds: [],
+        prepMinutes: 10,
+        effort: "No prep",
+        note: "Uses what you already own.",
+      },
+    ],
   },
   {
     id: "ribbon-wands",
     name: "Ribbon wand parade",
     duration: "20 min",
+    durationMin: 20,
     effort: "Low prep",
     ageMin: 7,
     ageMax: 8,
@@ -209,11 +387,61 @@ export const allActivities: Activity[] = [
     productIds: ["satin-ribbon", "craft-gems"],
     timelineId: "hunt",
     todoIds: ["decor-kit"],
+    partyValue: 6,
+    priority: "optional",
+    themes: [THEME],
+    venues: ["Backyard", "Park"],
+    setupMinutes: 15,
+    equipment: ["speaker", "scissors"],
+    tiers: [
+      {
+        id: "ready",
+        label: "Ribbon & charms",
+        requiredProductIds: ["satin-ribbon"],
+        optionalProductIds: ["craft-gems"],
+        prepMinutes: 30,
+        effort: "Low prep",
+        note: "Ribbon spools and garden sticks.",
+      },
+      {
+        id: "simple",
+        label: "Streamer wands",
+        requiredProductIds: [],
+        optionalProductIds: ["craft-gems"],
+        prepMinutes: 45,
+        effort: "Low prep",
+        note: "Crepe streamers on sticks from the garden.",
+      },
+    ],
   },
 ];
 
+/** Legacy age filter — kept for callers that only need age suitability. */
 export const activitiesFor = (age: number) =>
   allActivities.filter((a) => age >= a.ageMin && age <= a.ageMax);
+
+/** Everything the engine may choose from for this party, before costing. */
+export function eligibleActivities(details: PartyDetails): Activity[] {
+  return allActivities
+    .filter(
+      (a) =>
+        details.age >= a.ageMin &&
+        details.age <= a.ageMax &&
+        a.themes.includes(details.theme) &&
+        a.venues.includes(details.venue),
+    )
+    .sort((a, b) => b.partyValue - a.partyValue || a.id.localeCompare(b.id));
+}
+
+export const activityById = (id: string) => allActivities.find((a) => a.id === id);
+
+/** The tier a DIY preference starts from, before any budget pressure. */
+export function preferredTier(activity: Activity, diy: string): ActivityTier {
+  const ready = activity.tiers.find((t) => t.id === "ready");
+  const simple = activity.tiers.find((t) => t.id === "simple");
+  if (diy === "High") return simple ?? ready ?? activity.tiers[0]!;
+  return ready ?? simple ?? activity.tiers[0]!;
+}
 
 /* ------------------------------------------------------------------ */
 /* Timeline — derived from start time and duration                     */
@@ -452,17 +680,29 @@ export const allTodos: TodoTask[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Food — recipes with calculated quantities, no retailer              */
+/* Food — structured recipes with allergens, equipment and a tip       */
 /* ------------------------------------------------------------------ */
+
+export interface Ingredient {
+  id: string;
+  label: (d: PartyDetails) => string;
+  allergens: Allergen[];
+  /** A safe replacement when one of `allergens` is on the party's list. */
+  swap?: { label: (d: PartyDetails) => string; allergens: Allergen[] };
+}
 
 export interface Recipe {
   id: string;
   course: string;
   name: string;
   yield: (d: PartyDetails) => string;
-  ingredients: (d: PartyDetails) => string[];
+  items: Ingredient[];
+  equipment: string[];
+  prepMinutes: number;
   method: string[];
   makeAhead: string;
+  /** A Celebration Bureau flourish — something that makes the party better. */
+  tip: string;
 }
 
 export const recipes: Recipe[] = [
@@ -471,144 +711,194 @@ export const recipes: Recipe[] = [
     course: "Tea table",
     name: "Princess tea sandwiches",
     yield: (d) => `${d.guests * 2} halves`,
-    ingredients: (d) => [
-      `${Math.ceil(d.guests / 8)} loaf/loaves soft white bread`,
-      `${Math.ceil(d.guests * 0.8)} oz cream cheese`,
-      `${Math.ceil(d.guests / 5)} cucumbers`,
-      "Butter, softened",
-      "Sea salt",
+    items: [
+      {
+        id: "bread",
+        label: (d) => `${Math.ceil(d.guests / 8)} loaf/loaves soft white bread`,
+        allergens: ["gluten"],
+        swap: { label: (d) => `${Math.ceil(d.guests / 8)} loaf/loaves gluten-free white bread`, allergens: [] },
+      },
+      {
+        id: "cream-cheese",
+        label: (d) => `${Math.ceil(d.guests * 0.8)} oz cream cheese`,
+        allergens: ["dairy"],
+        swap: { label: (d) => `${Math.ceil(d.guests * 0.8)} oz oat-based soft spread`, allergens: [] },
+      },
+      { id: "cucumber", label: (d) => `${Math.ceil(d.guests / 5)} cucumbers`, allergens: [] },
+      {
+        id: "butter",
+        label: () => "Butter, softened",
+        allergens: ["dairy"],
+        swap: { label: () => "Dairy-free spread, softened", allergens: [] },
+      },
+      { id: "salt", label: () => "Sea salt", allergens: [] },
     ],
+    equipment: ["knife", "utensils", "fridge"],
+    prepMinutes: 30,
     method: [
       "Butter every slice to the edges so the filling doesn't soak in.",
       "Spread cream cheese, layer thin cucumber, season lightly.",
       "Trim the crusts, cut into triangles, cover with a damp cloth.",
     ],
     makeAhead: "Make the morning of; keep covered and chilled.",
+    tip: "Cut two of every four into crown shapes with a cookie cutter — children reach for those first.",
   },
   {
     id: "strawberry-fingers",
     course: "Tea table",
     name: "Strawberry & butter finger sandwiches",
     yield: (d) => `${d.guests * 2} fingers`,
-    ingredients: (d) => [
-      `${Math.ceil(d.guests / 10)} loaf/loaves soft white bread`,
-      `${Math.ceil(d.guests * 1.5)} strawberries`,
-      "Salted butter",
-      "1 tsp caster sugar",
+    items: [
+      {
+        id: "bread",
+        label: (d) => `${Math.ceil(d.guests / 10)} loaf/loaves soft white bread`,
+        allergens: ["gluten"],
+        swap: { label: (d) => `${Math.ceil(d.guests / 10)} loaf/loaves gluten-free bread`, allergens: [] },
+      },
+      { id: "strawberries", label: (d) => `${Math.ceil(d.guests * 1.5)} strawberries`, allergens: [] },
+      {
+        id: "butter",
+        label: () => "Salted butter",
+        allergens: ["dairy"],
+        swap: { label: () => "Salted dairy-free spread", allergens: [] },
+      },
+      { id: "sugar", label: () => "1 tsp caster sugar", allergens: [] },
     ],
+    equipment: ["knife", "utensils"],
+    prepMinutes: 20,
     method: ["Butter the bread.", "Layer thin strawberry slices, dust with sugar.", "Trim and cut into fingers."],
     makeAhead: "Assemble two hours ahead at most.",
+    tip: "A whisper of vanilla in the butter makes these taste like a bakery.",
   },
   {
     id: "fruit-skewers",
     course: "Tea table",
     name: "Fruit skewers with berries and melon",
     yield: (d) => `${d.guests} skewers`,
-    ingredients: (d) => [
-      `${d.guests} short wooden skewers`,
-      `${Math.ceil(d.guests / 5)} punnets strawberries`,
-      `${Math.ceil(d.guests / 8)} melon`,
-      `${Math.ceil(d.guests / 6)} punnets grapes`,
+    items: [
+      { id: "skewers", label: (d) => `${d.guests} short wooden skewers`, allergens: [] },
+      { id: "strawberries", label: (d) => `${Math.ceil(d.guests / 5)} punnets strawberries`, allergens: [] },
+      { id: "melon", label: (d) => `${Math.ceil(d.guests / 8)} melon`, allergens: [] },
+      { id: "grapes", label: (d) => `${Math.ceil(d.guests / 6)} punnets grapes`, allergens: [] },
     ],
+    equipment: ["knife", "tray", "fridge"],
+    prepMinutes: 25,
     method: ["Cut melon into cubes.", "Thread berry, melon, grape, repeat.", "Chill flat on a tray."],
     makeAhead: "Assemble the night before, cover tightly.",
+    tip: "Blunt the skewer points with scissors before the youngest guests arrive.",
   },
   {
     id: "crown-cookies",
     course: "Sweet",
     name: "Shortbread crown cookies",
     yield: (d) => `${d.guests + 6} cookies`,
-    ingredients: (d) => [
-      `${Math.ceil((d.guests + 6) / 12)} × 250 g butter`,
-      `${Math.ceil((d.guests + 6) / 12)} × 125 g caster sugar`,
-      `${Math.ceil((d.guests + 6) / 12)} × 375 g plain flour`,
-      "Edible gold dust",
+    items: [
+      {
+        id: "butter",
+        label: (d) => `${Math.ceil((d.guests + 6) / 12)} × 250 g butter`,
+        allergens: ["dairy"],
+        swap: { label: (d) => `${Math.ceil((d.guests + 6) / 12)} × 250 g dairy-free block`, allergens: [] },
+      },
+      { id: "sugar", label: (d) => `${Math.ceil((d.guests + 6) / 12)} × 125 g caster sugar`, allergens: [] },
+      {
+        id: "flour",
+        label: (d) => `${Math.ceil((d.guests + 6) / 12)} × 375 g plain flour`,
+        allergens: ["gluten"],
+        swap: { label: (d) => `${Math.ceil((d.guests + 6) / 12)} × 375 g gluten-free flour blend`, allergens: [] },
+      },
+      { id: "gold-dust", label: () => "Edible gold dust", allergens: [] },
     ],
+    equipment: ["oven", "mixer", "tray", "bowls"],
+    prepMinutes: 50,
     method: [
       "Cream butter and sugar, fold in flour, chill 30 minutes.",
       "Roll to 6 mm, cut crowns, bake 12–14 min at 340°F.",
       "Brush the points with gold dust once cool.",
     ],
     makeAhead: "Bake two days ahead, store airtight.",
+    tip: "Add edible pearls or a light sprinkle just before serving — it costs nothing and reads as expensive.",
   },
   {
     id: "lemonade",
     course: "Drinks",
     name: "Cloudy lemonade",
     yield: (d) => `${Math.ceil(d.guests * 0.4)} L`,
-    ingredients: (d) => [
-      `${Math.ceil(d.guests * 0.6)} lemons`,
-      `${Math.ceil(d.guests * 20)} g sugar`,
-      "Still water, ice",
-      "Mint to finish",
+    items: [
+      { id: "lemons", label: (d) => `${Math.ceil(d.guests * 0.6)} lemons`, allergens: [] },
+      { id: "sugar", label: (d) => `${Math.ceil(d.guests * 20)} g sugar`, allergens: [] },
+      { id: "water", label: () => "Still water, ice", allergens: [] },
+      { id: "mint", label: () => "Mint to finish", allergens: [] },
     ],
+    equipment: ["saucepan", "pitcher", "fridge"],
+    prepMinutes: 20,
     method: ["Warm juice and sugar until dissolved.", "Top with water, chill.", "Serve from a pitcher over ice."],
     makeAhead: "Make the day before.",
+    tip: "Freeze a few strawberries into the ice cubes — the pitcher becomes part of the styling.",
   },
 ];
 
-export const allergyNotes = [
-  "Every recipe above is nut-free by default.",
-  "For dairy-free, use oat spread and sorbet cups in place of butter and cream cheese.",
-  "Ask about allergies in the invitation, not on the day.",
-];
-
-/* ------------------------------------------------------------------ */
-/* Budget engine — the budget is a hard constraint                     */
-/* ------------------------------------------------------------------ */
-
-export interface BudgetResult {
-  items: PricedProduct[];
-  skipped: PricedProduct[];
-  total: number;
-  remaining: number;
-  byCategory: { category: string; total: number }[];
-  budget: number;
+/** A recipe resolved against the party's dietary constraints. */
+export interface PlannedRecipe extends Recipe {
+  ingredients: string[];
+  /** Ingredients that were replaced to respect the party's constraints. */
+  substitutions: string[];
+  /** True when no safe version of this dish exists for this party. */
+  excluded: boolean;
 }
 
-const priorityRank: Record<Priority, number> = { optional: 0, recommended: 1, essential: 2 };
+export function planRecipe(recipe: Recipe, details: PartyDetails): PlannedRecipe {
+  const avoid = details.dietary;
+  const ingredients: string[] = [];
+  const substitutions: string[] = [];
+  let excluded = false;
 
-export function buildShoppingList(details: PartyDetails): BudgetResult {
-  const relevant = products.filter((p) => p.themes.includes(details.theme));
-  const activityIds = new Set(activitiesFor(details.age).map((a) => a.id));
-
-  // Keep products that are either not activity-bound, or bound to an activity
-  // that suits this child's age.
-  const suitable = relevant.filter(
-    (p) => p.activityIds.length === 0 || p.activityIds.some((id) => activityIds.has(id)),
-  );
-
-  let kept = suitable.map((p) => priceFor(p, details.guests));
-  const skipped: PricedProduct[] = [];
-
-  const sum = (list: PricedProduct[]) => Math.round(list.reduce((s, i) => s + i.lineTotal, 0) * 100) / 100;
-
-  // Drop the least important, most expensive items until we fit the budget.
-  while (sum(kept) > details.budget) {
-    const droppable = kept
-      .filter((i) => i.priority !== "essential")
-      .sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || b.lineTotal - a.lineTotal);
-    const drop = droppable[0];
-    if (!drop) break;
-    kept = kept.filter((i) => i.id !== drop.id);
-    skipped.push(drop);
+  for (const item of recipe.items) {
+    const clash = item.allergens.some((a) => avoid.includes(a));
+    if (!clash) {
+      ingredients.push(item.label(details));
+      continue;
+    }
+    if (item.swap && !item.swap.allergens.some((a) => avoid.includes(a))) {
+      ingredients.push(item.swap.label(details));
+      substitutions.push(`${item.label(details)} → ${item.swap.label(details)}`);
+      continue;
+    }
+    excluded = true;
   }
 
-  const total = sum(kept);
-  const byCategory = Array.from(new Set(kept.map((i) => i.category))).map((category) => ({
-    category,
-    total: Math.round(kept.filter((i) => i.category === category).reduce((s, i) => s + i.lineTotal, 0) * 100) / 100,
-  }));
-
-  return {
-    items: kept,
-    skipped,
-    total,
-    remaining: Math.round((details.budget - total) * 100) / 100,
-    byCategory,
-    budget: details.budget,
-  };
+  return { ...recipe, ingredients, substitutions, excluded };
 }
+
+/** The menu for this party — every dish already respects the constraints. */
+export function menuFor(details: PartyDetails): PlannedRecipe[] {
+  return recipes.map((r) => planRecipe(r, details)).filter((r) => !r.excluded);
+}
+
+export function allergyNotesFor(details: PartyDetails): string[] {
+  const notes = ["Every dish on this menu is nut-free and peanut-free by default."];
+  if (details.dietary.length === 0) {
+    notes.push("Set a dietary requirement in the builder and the whole menu re-plans around it.");
+  } else {
+    const labels = details.dietary.map(dietaryLabel).join(", ");
+    notes.push(`This menu avoids: ${labels}. Ingredients have been swapped where needed.`);
+    const dropped = recipes
+      .map((r) => planRecipe(r, details))
+      .filter((r) => r.excluded)
+      .map((r) => r.name);
+    if (dropped.length > 0) {
+      notes.push(`Left off the menu for safety: ${dropped.join(", ")}.`);
+    }
+  }
+  notes.push("Ask about allergies in the invitation, not on the day.");
+  return notes;
+}
+
+/** Backwards-compatible static notes. */
+export const allergyNotes = allergyNotesFor(defaultParty);
+
+/* ------------------------------------------------------------------ */
+/* Shared helpers                                                      */
+/* ------------------------------------------------------------------ */
 
 export const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
@@ -627,7 +917,4 @@ export function productsByIds(details: PartyDetails, ids: string[]): PricedProdu
     .map((p) => priceFor(p, details.guests));
 }
 
-/** Cost of the products an activity needs. */
-export function activityCost(details: PartyDetails, ids: string[]) {
-  return productsByIds(details, ids).reduce((s, p) => s + p.lineTotal, 0);
-}
+export const priorityRank: Record<Priority, number> = { optional: 0, recommended: 1, essential: 2 };

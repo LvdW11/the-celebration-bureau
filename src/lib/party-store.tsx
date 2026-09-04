@@ -1,12 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  allTodos,
-  buildShoppingList,
-  defaultParty,
-  timelineFor,
-  activitiesFor,
-  type PartyDetails,
-} from "./plan";
+import { allTodos, defaultParty, timelineFor, menuFor, type PartyDetails } from "./plan";
+import { buildPlan } from "./engine";
 
 const KEY = "cb.party.v1";
 
@@ -103,14 +97,24 @@ export function useParty() {
 /** Convenience hooks derived from the single source of truth. */
 export function usePlan() {
   const { details } = useParty();
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const plan = buildPlan(details);
+    return ({
       details,
       timeline: timelineFor(details),
-      activities: activitiesFor(details.age),
-      budget: buildShoppingList(details),
+      activities: plan.activities.map((a) => a.activity),
+      selected: plan.activities,
+      plan,
+      menu: menuFor(details),
+      budget: {
+        items: plan.items,
+        skipped: plan.dropped,
+        total: plan.total,
+        remaining: plan.remaining,
+        byCategory: plan.byCategory,
+        budget: plan.budget,
+      },
       todos: allTodos,
-    }),
-    [details],
-  );
+    });
+  }, [details]);
 }
