@@ -38,7 +38,7 @@ function Preview() {
         </Link>
       </header>
 
-      <main className="mx-auto max-w-4xl px-5 pb-24 md:px-8">
+      <main className="mx-auto max-w-4xl px-5 py-10 pb-24 md:px-8 md:py-14">
         <p className="eyebrow">Free preview</p>
         <h1 className="mt-3 text-4xl md:text-5xl">
           {details.childName}'s {details.theme.toLowerCase()} party
