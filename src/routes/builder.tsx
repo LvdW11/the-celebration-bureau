@@ -48,7 +48,11 @@ function timeLabel(value: string) {
 }
 
 function parseDate(value: string): Date | undefined {
-  const parsed = new Date(value);
+  if (!value) return undefined;
+  // Older saved dates have no year ("Saturday, October 11") — read them as the
+  // coming season rather than letting the browser guess a past century.
+  const withYear = /\d{4}/.test(value) ? value : `${value}, ${new Date().getFullYear()}`;
+  const parsed = new Date(withYear);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
@@ -171,6 +175,8 @@ function Builder() {
                     <Calendar
                       mode="single"
                       captionLayout="dropdown"
+                      startMonth={new Date(new Date().getFullYear(), 0)}
+                      endMonth={new Date(new Date().getFullYear() + 2, 11)}
                       selected={parseDate(details.date)}
                       {...(parseDate(details.date) ? { defaultMonth: parseDate(details.date)! } : {})}
                       onSelect={(d) => d && setDetails({ date: format(d, DATE_FORMAT) })}
