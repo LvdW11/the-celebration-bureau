@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { LockedContinuation } from "@/components/PartyBits";
+import { ProductGrid } from "@/components/ProductCard";
+
 import { usePlan } from "@/lib/party-store";
 import { money } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
