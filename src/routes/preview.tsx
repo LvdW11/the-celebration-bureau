@@ -32,7 +32,7 @@ function Preview() {
   const shownTimeline = timeline.slice(0, 3);
   const hiddenMoments = gate.hidden(timeline, 3);
   const shownProducts = gate.spread(budget.items, 3).slice(0, 3);
-  const previewActivities = gate.unlocked ? activities : activities.slice(0, 2);
+  const previewActivities = gate.unlocked ? activities : activities.slice(0, 1);
   const previewMenu = menu.slice(0, 4);
 
   const locked = [
@@ -119,7 +119,8 @@ function Preview() {
           </ol>
           {hiddenMoments > 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              {hiddenMoments} more moments follow, through cake and farewell favors.
+              {hiddenMoments} more moments follow, through cake and farewell favors. Unlock the full
+              plan to see the complete afternoon schedule.
             </p>
           ) : null}
         </section>
@@ -127,7 +128,7 @@ function Preview() {
         {previewActivities.length > 0 ? (
           <section className="mt-12">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="text-2xl">Two of your activities</h2>
+              <h2 className="text-2xl">{gate.locked ? "One of your activities, in full" : "Your activities"}</h2>
               <Link to="/activities" className="text-sm text-gold underline-offset-4 hover:underline">
                 {gate.locked ? "More activity ideas" : `See all ${activities.length}`}
               </Link>
@@ -137,9 +138,9 @@ function Preview() {
                 <ActivityCard key={a.id} activity={a} />
               ))}
             </div>
-            {gate.locked && activities.length > 2 ? (
+            {gate.locked && activities.length > 1 ? (
               <LockedContinuation title="More activity ideas" className="mt-6" compact>
-                unlock the remaining {activities.length - 2} activities, with complete instructions,
+                unlock the remaining {activities.length - 1} activities, with complete instructions,
                 materials and shopping
               </LockedContinuation>
             ) : null}
@@ -163,7 +164,7 @@ function Preview() {
 
         <section className="mt-12">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="text-2xl">Your party menu</h2>
+            <h2 className="text-2xl">Your Party Menu</h2>
             <Link to="/food" className="text-sm text-gold underline-offset-4 hover:underline">
               {gate.locked ? "Menu preview" : "See the menu"}
             </Link>
