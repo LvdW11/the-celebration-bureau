@@ -68,6 +68,8 @@ function Checkout() {
           <p className="mt-3 text-center text-xs text-muted-foreground">Placeholder — no charge will be made.</p>
         </div>
       </main>
+
+      <SectionTabBar />
     </div>
   );
 }
