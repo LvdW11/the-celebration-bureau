@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { ActivityCard } from "@/components/ActivityCard";
+import { PaletteProducts } from "@/components/PaletteProducts";
+import { ProductStrip } from "@/components/ProductCard";
 import { LockedContinuation, ProgressBar } from "@/components/PartyBits";
 import { usePlan, useParty } from "@/lib/party-store";
 import { money } from "@/lib/plan";
 import { useGate } from "@/lib/gating";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
