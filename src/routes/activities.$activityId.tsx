@@ -40,9 +40,9 @@ function ActivityDetail() {
   const index = activities.findIndex((a) => a.id === activityId);
   const activity = activities[index];
   if (!activity) throw notFound();
-  // Free preview covers the two example activities only; the others stay
-  // behind the same unlock as the rest of the plan.
-  const previewOnly = gate.locked && index > 1;
+  // Free preview covers the first activity as a complete worked example; the
+  // others stay behind the same unlock as the rest of the plan.
+  const previewOnly = gate.locked && index > 0;
 
   // The plan may have simplified this activity to fit the budget, so the
   // detail page shows the version that is actually planned.
@@ -54,10 +54,6 @@ function ActivityDetail() {
   const moment = timeline.find((m) => m.id === activity.timelineId);
 
   const materials = activity.materials(details.guests);
-  const shownPrep = gate.limit(activity.preparation, 1);
-  const hiddenPrep = gate.hidden(activity.preparation, 1);
-  const shownMaterials = gate.limit(materials, 2);
-  const hiddenMaterials = gate.hidden(materials, 2);
 
 
   if (previewOnly) {
