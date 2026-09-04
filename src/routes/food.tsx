@@ -23,10 +23,10 @@ function FoodPage() {
   const { menu } = usePlan();
   const teaTime = timelineFor(details).find((m) => m.id === "tea")?.time;
   const gate = useGate();
-  // One dish is fully written out; a second shows its ingredient list so the
-  // scaling is visible. The rest keep names and yields.
+  // One dish is fully written out as the free example. The rest keep names
+  // and yields until the plan is unlocked.
   const full = gate.limit(menu, 1).map((r) => r.id);
-  const ingredientsOnly = gate.limit(menu, 2).map((r) => r.id);
+  const ingredientsOnly = full;
   const hiddenCount = gate.hidden(menu, 1);
 
   const courses = Array.from(new Set(menu.map((r) => r.course))).map((course) => ({
@@ -44,7 +44,7 @@ function FoodPage() {
   return (
     <AppShell
       eyebrow="Food"
-      title="The tea table"
+      title="Your Party Menu"
       intro={`Served seated${teaTime ? ` at ${teaTime}` : ""}, for ${details.guests} children. Almost everything can be made the day before.`}
     >
       <div className="space-y-8">
