@@ -160,6 +160,52 @@ function Dashboard() {
         ) : null}
       </section>
 
+      <section className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-2xl">Your Party Menu</h2>
+          <Link to="/food" className="text-sm text-gold underline-offset-4 hover:underline">
+            View
+          </Link>
+        </div>
+        <ul className="surface mt-5 divide-y divide-border/70 overflow-hidden">
+          {previewMenu.map((r, i) => {
+            const open = gate.unlocked || i === 0;
+            if (open) {
+              return (
+                <li key={r.id}>
+                  <Link
+                    to="/recipes/$recipeId"
+                    params={{ recipeId: r.id }}
+                    className="flex items-baseline justify-between gap-4 px-5 py-4 transition-colors hover:bg-secondary/40 md:px-7"
+                  >
+                    <span className="text-[0.95rem]">{r.name}</span>
+                    <span className="eyebrow shrink-0">{r.yield(details)}</span>
+                    <span className="text-gold">→</span>
+                  </Link>
+                </li>
+              );
+            }
+            return (
+              <li
+                key={r.id}
+                className="flex items-baseline justify-between gap-4 px-5 py-4 md:px-7"
+                aria-hidden
+              >
+                <span className="select-none text-[0.95rem] blur-[3px]">{r.name}</span>
+                <Lock className="size-3.5 shrink-0 self-center text-gold" strokeWidth={1.5} />
+              </li>
+            );
+          })}
+        </ul>
+        {hiddenRecipes > 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {hiddenRecipes} more recipes with scaled ingredients, method and make-ahead timings are in
+            your full plan.
+          </p>
+        ) : null}
+      </section>
+
+
 
       <section className="mt-12 grid gap-4 sm:grid-cols-2">
         {links.map((l) => (
